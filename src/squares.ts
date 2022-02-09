@@ -1,12 +1,10 @@
 //========CONSTANTS========
-export var WHOLE_BOARD_WIDTH: number = 16
-export var WHOLE_BOARD_HEIGHT: number = 16
-
-export var NORM_BOARD_WIDTH: number = 8
-export var NORM_BOARD_HEIGHT: number = 8
+export const WHOLE_BOARD_WIDTH: number = 16
+export const WHOLE_BOARD_HEIGHT: number = 16
+export const alphabet: string = "abcdefghijklmnop";
 
 //========TYPES========
-type Point = {
+export type Point = {
     x: number;
     y: number;
 }
@@ -29,11 +27,10 @@ export class Square {
         this.point = point;
         this.color = ((point.x + point.y) % 2 == 0) ? "black" : "white";
         if (point.x > WHOLE_BOARD_WIDTH || point.x < 0 || point.y > WHOLE_BOARD_HEIGHT || point.y < 0) {
-            throw new RangeError("Must initialise square inside the alloowed (16x16) range!");
+            throw new RangeError("Must initialise square inside the allowed (16x16) range!");
         }
-        //listed in this order to maintain classic chess notation - may change later as numbers will be annoying so may just remap both later
-        let alphabet: string = "ijklabcdefghmnop";
-        let y_num_str: string = String(point.y);
+        
+        const y_num_str: string = String(point.y);
         this.label = alphabet[point.x] + y_num_str;
     }
 }

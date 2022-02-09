@@ -1,119 +1,128 @@
+import { alphabet, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares"
+import { Point, Vector } from "./squares"
+import { Square, Forbidden, Hyper, Link, Arch, Circle } from "./squares"
 
+export var NORM_BOARD_WIDTH: number = 8;
+export var NORM_BOARD_HEIGHT: number = 8;
 
-import {Point, Square, Forbidden, Hyper, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH, NORM_BOARD_HEIGHT, NORM_BOARD_WIDTH} from './squares'
+type Row = Array<Square>;
+type Loop = Array<Square>;
+type PossibleLoops = "linex" | "liney" | "archx" | "archy" | "circleup" | "circledown";
 
-export type Board = Array<Array<Square>> 
-export var board: Board = []
+export class Board {
+    base_w: number;
+    base_h: number;
+    norm_board_inds: Array<number>;
+    loops: Array<Loop>;
+    squares: Array<Row>;
+    constructor(bw: number, bh: number) {
+        //find indices s.t normal board sits in the middle of the whole board
+        this.base_w = bw;
+        this.base_h = bh;
 
-export var loops: Array<Array<Square>> = []
+        const left_x_ind: number = Math.floor((WHOLE_BOARD_WIDTH - bw) / 2) - 1;
+        const right_x_ind: number = left_x_ind + this.base_w;
+        const bot_y_ind: number = Math.floor((WHOLE_BOARD_HEIGHT - bh) / 2) - 1;
+        const top_y_ind: number = bot_y_ind + this.base_h;
+        this.norm_board_inds = [left_x_ind, bot_y_ind, right_x_ind, top_y_ind];
 
-export function fill_background(board: Board) : Board{
-    //Fill board with forbidden squares to start
-    for (let y=0; y<WHOLE_BOARD_HEIGHT; y++){
-        let row = []
-        for (let x=0; x<WHOLE_BOARD_WIDTH; x++){
-            let p = new Point(x, y)
-            let sq = new Forbidden(p)
-            row.push(sq)
-        }
-        board.push(row)
+        //empty initialisations
+        this.loops = [];
+        this.squares = [];
     }
-    return board
-}
 
-export function fill_normal_board(board: Board) : Board  {
-    //Overwrite centre of board in 8x8 squares to make normal chessboard
-    let start_x: number = 3
-    let start_y: number = 5
-    for (let y=start_y; y<start_y+NORM_BOARD_HEIGHT; y++){
-        for (let x=start_x; x<start_x+NORM_BOARD_WIDTH; x++){
-            let p = new Point(x, y)
-            let sq = new Square(p)
-            board[y][x] = sq
+    fill_background() : Array<Row>{
+        //Fill board with forbidden squares to start
+        const squares: Array<Row> = [];
+        for (let y=0; y<WHOLE_BOARD_HEIGHT; y++){
+            let row = [];
+            for (let x=0; x<WHOLE_BOARD_WIDTH; x++){
+                const p: Point = {"x": x, "y": y};
+                const current_sq: Forbidden = new Forbidden(p);
+                row.push(current_sq);
+            }
+            squares.push(row);
         }
+        return squares;
     }
-    return board
-}
 
-export function create_3_loop(board: Board, start_x: number, start_y: number, alignment: number) : Board {
-    //Overwrite forbidden squares to create a 3 loop with direction set by alignment
-    let start_p : Point = new Point(start_x, start_y)
-    let middle_p : Point = new Point(start_x + alignment, start_y + 1)
-    let end_p : Point = new Point(start_x, start_y+2)
-    let p1: Square = new Hyper(start_p, [middle_p])
-    let p2: Square = new Hyper(middle_p, [start_p, end_p], false)
-    let p3: Square = new Hyper(end_p, [middle_p])
-    board[start_p.y][start_p.x] = p1
-    board[middle_p.y][middle_p.x] = p2
-    board[end_p.y][end_p.x] = p3
-    let loop: Array<Square> = [p1, p2, p3]
-    loops.push(loop)
-    return board
-}
-
-export function create_8_loop(board: Board) : Board {
-    //adds both 8 loops in here
-    let x_arr = [3,10]
-    let y_arr = [2,13]
-
-    let loop_top: Array<Square> = []
-    let loop_bottom: Array<Square> = []
-    
-
-    for (let x of x_arr) {
-
-        for (let y of y_arr) {
-            let start_p = new Point(x,y)
-            let middle_p = new Point(x,y+1)
-            let end_p = new Point(x,y+2)
-            let hyper_p = (y == 2) ? new Point(x, y-1) : new Point(x,y+3) 
-
-            let p1 = new Square(start_p)
-            let p2 = new Square(middle_p)
-            let p3 = new Square(end_p)
-            let p4 = new Hyper(hyper_p, [new Point((WHOLE_BOARD_WIDTH - hyper_p.x - 1), hyper_p.y)])
-            board[start_p.y][start_p.x] = p1
-            board[middle_p.y][middle_p.x] = p2
-            board[end_p.y][end_p.x] = p3
-            board[hyper_p.y][hyper_p.x] = p4
-            // loop.push(p1, p2, p3, p4)
-            for(let p of [p1, p2, p3, p4]){
-                if (p.point.y < 5) {
-                    loop_top.push(p)
-                }
-                else{
-                    loop_bottom.push(p)
-                }
+    fill_normal_board(squares: Array<Row>) : Array<Row>{
+        //Fill the middle of the board with normal squares that correspond to bw x bh rectangle
+        const [lx, by, rx, ty]: Array<number> = this.norm_board_inds
+        for (let y=by; y<ty; y++){
+            for (let x=lx; x<rx; x++){
+                const p: Point = {"x": x, "y": y};
+                const current_sq: Square = new Square(p);
+                squares[y][x] = current_sq;
             }
         }
-        loops.push(loop_top, loop_bottom)
-
+        return squares;
     }
-    return board
+
+    parse_loop_unit(loop_unit: string) : Array<Point>{
+        /*Given a 'unit' of a loop string i.e 'a8_b5', split at underscore and map the first
+        character to its position in alphabet (and therefore index on the whole board) and
+        parse the second part (a string of length 1 or 2 representing a number) as the other
+        index. Make a point based on those and return.*/
+        const loop_strs: Array<string> = loop_unit.split('_');
+        const loop_start_end: Array<Point> = [];
+        for (let str of loop_strs) {
+            //we know first char of any string will be string in a..p
+            const x: number = alphabet.indexOf(str[0]);
+            //variable length int represented as string
+            const y: number = parseInt(str.slice(1));
+            const p: Point = {"x": x, "y": y};
+            loop_start_end.push(p);
+        }
+        return loop_start_end;
+    }
+
+    parse_loop_string(loop_string: string) : Array<Array<Point>>{
+        /*Given a string of form 'a8_b5%a4_m9%l9_f4', where % denotes new loops, get a list of 
+        start/end points these correspond to. */
+        const loop_str_units: Array<string> = loop_string.split('%');
+        const loop_points: Array<Array<Point>> = loop_str_units.map(x => this.parse_loop_unit(x));
+        return loop_points;
+    }
+
+    get_loop_type(loop_points: Array<Point>) : PossibleLoops{
+        const [lx, by, rx, ty]: Array<number> = this.norm_board_inds;
+        const p1: Point = loop_points[0], p2: Point = loop_points[1];
+        const dx: number = p1.x - p2.x, dy: number = p1.y - p2.y;
+        const on_x_side = (p1.x + 1 == lx) || (p1.x - 1 == rx);
+        const on_y_side = (p1.y + 1 == by) || (p1.y - 1 == ty);
+        let loop_type: PossibleLoops;
+        if (dx == 0 && on_y_side) {
+            loop_type = "liney";
+        }
+        else if (dy == 0 && on_x_side) {
+            loop_type = "linex";
+        }
+        else if (dx != 0 && on_y_side) {
+            loop_type = "archy";
+        }
+        else if (dy != 0 && on_x_side) {
+            loop_type = "archx";
+        }
+        else if (dy < 0 && dx != 0) {
+            loop_type = "circledown";
+        }
+        else if (dy > 0 && dx != 0) {
+            loop_type = "circledown";
+        }
+        else {
+            throw new Error("Invalid looping!");
+        }
+        return loop_type;
+    }
+
+
 }
 
-export function add_8_loop(board: Board, start_x: number, start_y: number, alignment: number) {
-    let opp_x = start_x + NORM_BOARD_WIDTH
-    for (let x of [start_x, opp_x]) {
-        let start_p = new Point(x,start_y)
-        let middle_p = new Point(x,start_y+1*alignment)
-        let end_p = new Point(x,start_y+2*alignment)
-        
-    }
-}
 
 
-export function add_loops(board: Board) : Board {
-    let three_loop_pos: Array<Point> = [new Point(2, 5), new Point(2, 10), new Point(11, 5), new Point(11, 10)]
-    for (let p=0; p<4; p++) {
-        let point = three_loop_pos[p]
-        let alignment: number = (p < 2) ? -1 : 1
-        board = create_3_loop(board, point.x, point.y, alignment)
-    }
-    board = create_8_loop(board)
-    return board
-}
 
+/*
 function print_board(board: Board) : void {
     //Print out string repr of the board so we know what's going on
     board.reverse()
@@ -135,8 +144,4 @@ function print_board(board: Board) : void {
         console.log(out_row.join())
     }
 }
-
-board = fill_background(board)
-board = fill_normal_board(board)
-board = add_loops(board)
-//print_board(board)
+*/
