@@ -1,5 +1,5 @@
 import { alphabet, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares"
-import { Point, Vector } from "./squares"
+import { Point } from "./squares"
 import { Square, Forbidden, Hyper, Link, Arch, Circle } from "./squares"
 
 export var NORM_BOARD_WIDTH: number = 8;
@@ -160,6 +160,7 @@ export class Board {
             throw new Error("Invalid looping!");
         }
         console.log(loop_type)
+        this.loops.push(loop_squares)
         return loop_squares;
     }
 
@@ -300,7 +301,7 @@ export class Board {
             for (let sq of row) {
                 let out_char = ""
                 if (sq instanceof Forbidden) {
-                    out_char = "X"
+                    out_char = " "
                 }
                 else if (sq instanceof Link) {
                     out_char = "L"
@@ -327,29 +328,4 @@ export class Board {
 
 }
 
-const b = new Board(8, 8, hyper_with_line)
-b.print_board()
-
-/*
-function print_board(board: Board) : void {
-    //Print out string repr of the board so we know what's going on
-    board.reverse()
-    for (let row of board) {
-        let out_row = []
-        for (let sq of row) {
-            let out_char = ""
-            if (sq instanceof Forbidden) {
-                out_char = "X"
-            }
-            else if (sq instanceof Hyper) {
-                out_char = "H"
-            }
-            else {
-                out_char = (sq.color == "black") ? "B" : "W"
-            }
-            out_row.push(out_char)
-        }
-        console.log(out_row.join())
-    }
-}
-*/
+export const b = new Board(8, 8, hyper_with_line)

@@ -11,7 +11,7 @@ export type Point = {
 
 //lazy but vectors are effectively just points - defined for clarity
 export type Vector = Point
-
+export type Color = "white" | "black"
 
 //========SQUARES========
 export class Square {
@@ -21,7 +21,7 @@ export class Square {
     the point map later (as you can't map via objects).
     */
     point: Point;
-    color: string;
+    color: Color;
     label: string;
     constructor(point: Point){
         this.point = point;
