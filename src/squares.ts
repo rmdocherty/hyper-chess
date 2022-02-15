@@ -13,6 +13,21 @@ export type Point = {
 export type Vector = Point
 export type Color = "white" | "black"
 
+
+export function label_to_point(label: string): Point {
+    const x_chr: string = label[0];
+    const y_chr: string = label[1];
+    const x: number = alphabet.indexOf[x_chr];
+    const y: number = alphabet.indexOf[y_chr];
+    const p = {"x": x, "y": y};
+    return p;
+}
+
+export function x_y_to_label(x: number, y: number): string {
+    return alphabet[x] + alphabet[y]
+}
+
+
 //========SQUARES========
 export class Square {
     /* Square class:
@@ -29,9 +44,7 @@ export class Square {
         if (point.x > WHOLE_BOARD_WIDTH || point.x < 0 || point.y > WHOLE_BOARD_HEIGHT || point.y < 0) {
             throw new RangeError("Must initialise square inside the allowed (16x16) range!");
         }
-        
-        const y_num_str: string = String(point.y);
-        this.label = alphabet[point.x] + y_num_str;
+        this.label = alphabet[point.x] + alphabet[point.y];
     }
 }
 

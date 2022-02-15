@@ -1,84 +1,49 @@
-import * as brd from './board'
-import * as sq from './squares'
-import * as pc from './pieces'
+import { alphabet, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares";
+import { label_to_point, x_y_to_label } from "./squares";
+import { Point, Color, Vector } from "./squares";
+import { Square, Forbidden, Hyper, Link, Arch, Circle } from "./squares";
+import { Board } from "./board";
+import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
 
-export var base_game: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
-var rook_test: string = "r7/8/8/8/8/8/8/8"
-var string_to_piece = {"r": pc.Rook, "n": pc.Knight, "q": pc.Queen, "p": pc.Pawn, "k": pc.King, "b": pc.Bishop}
-
-
+var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+var rook_test: string = "r7/8/8/8/8/8/8/8";
+var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
 export class Game {
-    //TODO: make this map lol
-    PointToPiece: Map<number, pc.Piece>
-    board: brd.Board
-    white_pieces: Array<pc.Piece>
-    black_pieces: Array<pc.Piece>
-    enpassant_flag: Boolean
-    enpassant_sq : sq.Square
-    turn_counter: number
-    game_state: number
-    constructor(board: brd.Board) {
-        this.board = brd.board
-        this.white_pieces = []
-        this.black_pieces = []
-        this.PointToPiece = new Map<number, pc.Piece>();
-        this.enpassant_flag = false
-        this.turn_counter = 0
+    LabelToPiece: Map<string, Piece>;
+    board: Board;
+    enpassant_flag: Boolean;
+    enpassant_sq : Square;
+    turn_counter: number;
+    game_state: number;
+    constructor(bw: number, bh: number, loop_str: string = "", fen_str: string = "") {
+        this.board = new Board(bw, bh, loop_str);
+        this.LabelToPiece = new Map<string, Piece>();
+        this.enpassant_flag = false;
+        this.turn_counter = 0;
+        this.game_state = 0
+        this.gen_from_fen(fen_str)
     }
 
-    public print_board(): void{
-        this.board
-        //board.reverse()
-        for (let row of this.board) {
-            let out_row = []
-            for (let current_sq of row) {
-                let out_char = ""
-                if (current_sq instanceof sq.Forbidden) {
-                    out_char = "_"
-                }
-                else if (this.PointToPiece.has(current_sq.point.index)){
-                    out_char = this.PointToPiece.get(current_sq.point.index).piece_char
-                }
-                else if (current_sq instanceof sq.Hyper) {
-                    out_char = "H"
-                }
-                else {
-                    out_char = (current_sq.color == "black") ? " " : " "
-                }
-                out_row.push(out_char)
-            }
-            console.log(out_row.join())
-        }
-    }
-
-    public gen_from_fen(fen_str: string): void{
-        //Generate piece from FEN notation string, white is upper case, black lower case. Ignore en passant and castle strings for now.
-        let x = 3
-        let y = 12
+    gen_from_fen(fen_str: string): void {
+        let x = this.board.base_w;
+        let y = this.board.base_h;
         for (let piece_str of fen_str) {
-            let lower_case_str: string = piece_str.toLowerCase()
-            let color: pc.Color = pc.Color.White
+            let lower_case_str: string = piece_str.toLowerCase();
+            let color: Color = "white";
             if (lower_case_str == piece_str){
-                color = pc.Color.Black
+                color  = "black";
             }
     
             if (piece_str == "/") {
-                y -= 1
-                x = 3
+                y -= 1;
+                x = 3;
             }
             else if (['r', 'p', 'q', 'b', 'k', 'n'].includes(lower_case_str)) {
-                let point = new sq.Point(x, y)
-                let piece_type = string_to_piece[lower_case_str]
-                let piece = new piece_type(point, color)
-                this.PointToPiece.set(point.index, piece)
-                
-                if (color == pc.Color.Black) {
-                    this.black_pieces.push(piece)
-                }
-                else {
-                    this.white_pieces.push(piece)
-                }
+                const piece_type = string_to_piece[lower_case_str];
+                const piece: Piece = new piece_type(color);
+                const label: string = x_y_to_label(x, y);
+                this.LabelToPiece.set(label, piece);
                 x += 1
             }
             else {
@@ -86,208 +51,41 @@ export class Game {
             }
         }
     }
-    
-    
-    public check_square(square_to_check: sq.Square, color: pc.Color) : boolean{
-        // Check if forbidden
-        if (square_to_check instanceof sq.Forbidden) {
-            return false
+
+    check_if_sq_empty(chk_sq: Square) : boolean{
+        // Check if square occupied by anything
+        if (chk_sq instanceof Forbidden) {
+            return false;
         }
-        // Check if occupied by same colour
-        let point = square_to_check.point
-        if (this.PointToPiece.has(point.index)) {
-            let piece = this.PointToPiece.get(point.index)
+        const label: string = chk_sq.label
+        if (this.LabelToPiece.has(label)) {
+            return false;
+        }
+        return true;
+    }
+
+    check_if_square_takeable(chk_sq: Square, color: Color) : boolean {
+        if (chk_sq instanceof Forbidden) {
+            return false;
+        }
+        const label: string = chk_sq.label
+        if (this.LabelToPiece.has(label)) {
+            const piece: Piece = this.LabelToPiece.get(label);
             if (piece.color == color) {
-                return false
+                return false;
             }
         }
-    
-        // If occupied by different colour or square is empty:
-        return true    
+        return true;
     }
 
-    public hypersquare_check(piece, new_sq, valid_moves, mv){
-        //recursive check to loop around hypersquares you haven't already visited
-        
-        let point = new_sq.point
+    public find_valid_moves(piece: Piece) {
+        let valid_moves: Array<Square> = []
+        // TODO: make an inverted version of map so we can find a piece's position
+        // May be best to make a class that just copies the get/set/delete/has interface but automatically updates both directions.
 
-        if (new_sq instanceof sq.Hyper && !this.PointToPiece.has(point.index) && !valid_moves.includes(new_sq)) {
-            for (let link_point of new_sq.link_sqs) {
-                valid_moves.push(new_sq)
-                //invert move vector
-                let inverted_mv = new pc.MoveVector(-1 * mv.x, -1 * mv.y)
-                let link_sq = this.board[link_point.y][link_point.x]
-                if (new_sq.invert) {
-                    valid_moves = this.find_continuous_valid_moves(piece, link_sq, valid_moves, inverted_mv)
-                }
-                else {
-                    valid_moves = this.find_continuous_valid_moves(piece, link_sq, valid_moves, mv)
-                }
-                
-            }   
-        }
-        return valid_moves
-    }
-    
-    public find_continuous_valid_moves(piece: pc.Piece, new_sq: sq.Square, valid_moves: Array<sq.Square>,
-        mv: pc.MoveVector) : Array<sq.Square>
-    {
-        let quit: boolean = false
-        while(!quit){
-            //check if square is valid move and add that to valid moves
-            let point = new_sq.point
-
-            valid_moves = this.hypersquare_check(piece, new_sq, valid_moves, mv)
-
-            if (this.check_square(new_sq, piece.color) && !valid_moves.includes(new_sq)) {
-                valid_moves.push(new_sq)
-            }
-
-            
-            //check if square occupied by ANYTHING or if the square is forbidden
-            
-            quit = this.PointToPiece.has(point.index) || new_sq instanceof sq.Forbidden
-            if (!quit){ //need this to avoid overskipping
-                new_sq = this.board[point.y + mv.y][point.x + mv.x]
-            }
-        }
-        return valid_moves
-    }
-    
-    public find_valid_moves(piece: pc.Piece) {
-        // TODO: Handle castling
-        let valid_moves: Array<sq.Square> = []
-        let px: number = piece.position.x
-        let py: number = piece.position.y
-        //console.log(piece, piece.move_vectors)
         for (let mv of piece.move_vectors) {
-            //if you start on hypersquare
-            let current_sq = this.board[py][px]
-            valid_moves = this.hypersquare_check(piece, current_sq, valid_moves, mv)
-
-            let new_sq: sq.Square = this.board[py + mv.y][px + mv.x]
-            if(piece.move_continuous){        
-                valid_moves = this.find_continuous_valid_moves(piece, new_sq, valid_moves, mv)
-            }
-            else{
-                //TODO: Handle pawns
-                if (this.check_square(new_sq, piece.color)) {
-                    valid_moves.push(new_sq)
-                }
-            }
+            const current_sq = this.board.get_square()
         }
-        if (piece instanceof pc.Pawn) {
-            valid_moves = []
-            let pawn = piece as pc.Pawn
-            if (pawn.unmoved)  {
-                let new_sq: sq.Square = (pawn.color != pc.Color.Black) ? this.board[py + 2][px] : this.board[py - 2][px]
-                console.log(this.PointToPiece.has(new_sq.point.index))
-                if (this.check_square(new_sq, pawn.color) && (!(this.PointToPiece.has(new_sq.point.index)))) {
-                    valid_moves.push(new_sq)
-                }
-                new_sq = (pawn.color != pc.Color.Black) ? this.board[py + 1][px] : this.board[py - 1][px]
-                if (this.check_square(new_sq, pawn.color) && (!(this.PointToPiece.has(new_sq.point.index)))) {
-                    valid_moves.push(new_sq)
-                }
-            else {
-                let new_sq: sq.Square = (pawn.color = pc.Color.Black) ? this.board[py + 1][px] : this.board[py - 1][px]
-                if (this.check_square(new_sq, pawn.color) && (!(this.PointToPiece.has(new_sq.point.index)))) {
-                    valid_moves.push(new_sq)
-                }
-            }
-            for (let av of pawn.attack_vectors) {
-                let new_sq: sq.Square = this.board[py + av.y][px + av.x]
-                if (this.check_square(new_sq, pawn.color) && (this.PointToPiece.has(new_sq.point.index))) {
-                    valid_moves.push(new_sq)
-                }
-            }
-            }
-        }
-        if (piece instanceof pc.King) {
-            let king = piece as pc.King
-            if (king.unmoved) {
-                let back_y = (king.color == pc.Color.Black) ? 3 : 12
-                let right_mv = new pc.MoveVector(1,0)
-                let left_mv = new pc.MoveVector(-1,0)
-
-                let castling_moves = this.find_continuous_valid_moves(king, this.board[8][back_y], valid_moves, right_mv)
-                if (!castling_moves.includes(this.board[10][back_y])) {
-                    let pot_rook = this.PointToPiece.get(this.board[10][back_y].point.index)
-                    if (pot_rook instanceof pc.Rook) {
-                        let rook = piece as pc.Rook
-                        if (rook.unmoved) {
-                            valid_moves.push(this.board[9][back_y])          
-                        }
-                    }
-                }
-
-                castling_moves = this.find_continuous_valid_moves(king, this.board[6][back_y], valid_moves, left_mv)
-                if (!castling_moves.includes(this.board[3][back_y])) {
-                    let pot_rook = this.PointToPiece.get(this.board[3][back_y].point.index)
-                    if (pot_rook instanceof pc.Rook) {
-                        let rook = piece as pc.Rook
-                        if (rook.unmoved) {
-                            valid_moves.push(this.board[5][back_y])          
-                        }
-                    }                   
-                }
-            }
-                
-               
-              //  if (this.check_square(this.board[8][back_y], king.color)) && 
-            
-        }
-        return valid_moves
     }
 
-    public make_move(old_sq: sq.Square, new_sq: sq.Square) {
-        this.enpassant_flag = false
-        let piece = this.PointToPiece.get(old_sq.point.index)
-        console.log(piece)
-        if (this.PointToPiece.get(new_sq.point.index) instanceof pc.King) {
-            this.game_state = (piece.color == pc.Color.Black) ? -1 : 1
-        }
-
-        console.log(this.PointToPiece.get(new_sq.point.index))        
-        this.PointToPiece.set(new_sq.point.index, piece)
-        piece.position = new_sq.point
-        console.log(this.PointToPiece.get(new_sq.point.index))  
-        this.PointToPiece.delete(old_sq.point.index)
-        console.log(this.PointToPiece.get(old_sq.point.index))  
-        
-        if (piece instanceof pc.King) {
-            piece.unmoved = false
-        }
-        else if (piece instanceof pc.Pawn) {
-            if(piece.unmoved){
-                piece.move_vectors = [
-                    new pc.MoveVector(0, piece.direction),
-                ]
-            }
-            piece.unmoved = false
-            if (Math.abs(new_sq.point.y - old_sq.point.y) == 2) {
-                this.enpassant_flag = true
-            }
-            if ((new_sq.point.y == 5) || (new_sq.point.y == 12)) {
-                piece = new pc.Queen(new_sq.point, piece.color)
-                this.PointToPiece.set(new_sq.point.index, piece)
-            }
-            if (new_sq.point.x != old_sq.point.x) {
-                this.PointToPiece.delete(this.enpassant_sq.point.index)
-            }
-        }
-        else if (piece instanceof pc.Rook) {
-            piece.unmoved = false
-        }
-        this.turn_counter++
-    }
 }
-
-
-export var g = new Game(brd.board)
-g.gen_from_fen(base_game)
-// console.log(g.PointToPiece.get([3, 5]))
-g.print_board()
-let rook = g.black_pieces[0]
-//console.log(g.black_pieces, g.white_pieces)
-//console.log(g.find_valid_moves(rook))

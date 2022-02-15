@@ -1,4 +1,5 @@
 import { alphabet, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares"
+import { label_to_point } from "./squares"
 import { Point } from "./squares"
 import { Square, Forbidden, Hyper, Link, Arch, Circle } from "./squares"
 
@@ -11,7 +12,7 @@ type PossibleLoops = "linex" | "liney" | "archx" | "archy" | "circleup" | "circl
 type Dir = Array<-1 | 1>
 type Align = ["x" | "y", "l" | "r" | "t" | "b"]
 
-const hyper_board_str: string = "dedg%djdl%memg%mlmj%emlm%edld"
+export const hyper_board_str: string = "dedg%djdl%memg%mlmj%emlm%edld"
 const hyper_with_line: string = "dedg%djdl%memg%mlmj%emlm%edld%dimi%dhmh"
 
 export class Board {
@@ -36,6 +37,29 @@ export class Board {
         this.squares = this.make_board(loop_str);
     }
 
+    public get_square(label: string | Point) : Square {
+        let p: Point;
+        if (typeof label == "string") {
+            p = label_to_point(label);
+        }
+        else {
+            p = label;
+        }
+        const sq = this.squares[p.y][p.x];
+        return sq;
+    }
+
+    public set_square(label: string | Point, to_set: Square) : void {
+        let p: Point;
+        if (typeof label == "string") {
+            p = label_to_point(label);
+        }
+        else {
+            p = label;
+        }
+        this.squares[p.y][p.x] = to_set;
+    }
+
     fill_background() : Array<Row> {
         //Fill board with forbidden squares to start
         const squares: Array<Row> = [];
@@ -54,6 +78,7 @@ export class Board {
     fill_normal_board(squares: Array<Row>) : Array<Row> {
         //Fill the middle of the board with normal squares that correspond to bw x bh rectangle
         const [lx, by, rx, ty]: Array<number> = this.norm_board_inds
+        // Need the +1s here to avoid undercounting by 1
         for (let y=by; y<ty+1; y++){
             for (let x=lx; x<rx+1; x++){
                 const p: Point = {"x": x, "y": y};
@@ -64,7 +89,7 @@ export class Board {
         return squares;
     }
 
-    make_board(loop_str: string) : Array<Row>{
+    public make_board(loop_str: string) : Array<Row>{
         let squares: Array<Row> = this.fill_background()
         squares = this.fill_normal_board(squares)
         if (loop_str != "") {
@@ -74,6 +99,7 @@ export class Board {
     }
 
     add_loops(squares: Array<Row>, loop_str: string) : Array<Row> {
+        // Given a loop string, break it down into loop starts and ends, then add the correct loop from those starts and ends.
         const all_loop_points: Array<Array<Point>> = this.parse_loop_string(loop_str)
         for (let loop_points of all_loop_points) {
             const sqs_to_add: Array<Square> = this.add_loop(loop_points)
@@ -112,18 +138,16 @@ export class Board {
 
     add_loop(loop_points: Array<Point>) : Array<Square> {
         /*Given the start and end loop points, find out which kind of loop it is (line, arch, circle)
-        based on its dx, dy and whether it's directly on edge of board or not. */
+        based on its dx, dy and whether it's directly on edge of board or not - then make it!*/
         let loop_squares: Array<Square>;
         const [lx, by, rx, ty]: Array<number> = this.norm_board_inds;
         const p1: Point = loop_points[0], p2: Point = loop_points[1];
         const dx: number = p1.x - p2.x, dy: number = p1.y - p2.y;
+        // I do apologise for all this - but we need to know which side of the board it's on to make the right direction vector for the arch.
         const on_left: boolean = (p1.x + 1 == lx) 
         const on_right: boolean = (p1.x - 1 == rx);
         const on_top: boolean = (p1.y + 1 == by)
         const on_bot: boolean = (p1.y - 1 == ty);
-        console.log(this.norm_board_inds)
-        console.log(p1.x, p1.y)
-        console.log("dx: ", dx, "dy: ", dy, "L:", on_left, "R: ", on_right, "T: ", on_top, "B:", on_bot)
 
         let loop_type: PossibleLoops;
         if (dx == 0 && (on_top || on_bot)) {
@@ -217,11 +241,14 @@ export class Board {
 
     make_diagonal (sx: number, sy: number, L: number, dir: Dir) : Array<Square>{
         const sqs: Array<Square> = [];
+        // As we're staircasing, we increment x and y equally each step
         for (let i=0; i<L; i++){
             let x: number, y: number;
             let f_lx: number, f_ly: number;
             let b_lx: number, b_ly: number;
-            //error heere - need to be to determine which way x is going based on which side it is.
+
+            // Get the current pos and the backward and forward squares for later
+            // We do need to make sure we're facing the right direction, which is what dir is for
             x = sx + dir[0] * i, y = sy + dir[1] * i;
             f_lx = x + dir[0] * 1, f_ly = y + dir[1] * 1;
             b_lx = x - dir[0] * 1, b_ly = y - dir[1] * 1;
@@ -230,10 +257,10 @@ export class Board {
             const fp : Point = {"x": f_lx, "y": f_ly};
             const bp : Point = {"x": b_lx, "y": b_ly};
             let sq: Square;
-            if (i == 0){
+            if (i == 0){ // Add in entry points at bottom of arch
                 sq = new Arch(p, [fp], "x");
             }
-            else {
+            else { // Else add in our bi-directional loops
                 sq = new Link(p, [bp, fp]);
             }
             sqs.push(sq);
@@ -242,6 +269,7 @@ export class Board {
     }
 
     map_align_to_dir(align: Align) : Dir {
+        // Very cryptic and for good reason - this is a semi-empirical fn that just works
         // y, l -> -1, 1   y, r -> 1, 1   x, b -> 1, 1   x, t -> 1, -1
         let dir: Dir = [1, 1];
         switch (align[1]) {
@@ -264,12 +292,11 @@ export class Board {
     }
 
     make_arch(loop_start_end: Array<Point>, delta: number, align: Align) : Array<Square>{
-        /*TODO: get this working by calling make diagonal twice and adding in the correct 
-        top of loop depending on dx parity. Also need to make it work for both x and y 
-        in the same function.*/ 
+        /* Make an arch by creating two staircase heaging up from start and end points that meet in the middle.*/
         const L: number = Math.floor(Math.abs(delta) / 2) + 1;
         let start_p: Point;
         let end_p: Point;
+        // As in line case, swap to make sure we always start with the lower value (either in x or y)
         if (delta > 0) { //R <- L case
             [end_p, start_p] = loop_start_end;
         }
@@ -277,23 +304,22 @@ export class Board {
             [start_p, end_p] = loop_start_end;
         }
         const [sx, sy, ex, ey]: Array<number> = [start_p.x, start_p.y, end_p.x, end_p.y]
-        
+        // Get the inital direction vector out
         let dir: Dir = this.map_align_to_dir(align);
         const first_half: Array<Square> = this.make_diagonal(sx, sy, L, dir);
-
+        //Once we make one staircase/diagonal, we need to flip the direction we're using
         if (align[0] == "x") {
             dir[0] = -1;
         }
         else {
             dir[1] = -1;
         }
-
         const second_half: Array<Square> = this.make_diagonal(ex, ey, L, dir);
         const loop_squares: Array<Square> = first_half.concat(second_half);
         return loop_squares;
     }
 
-    print_board() : void {
+    public print_board() : void {
         //Print out string repr of the board so we know what's going on
         for (let iy=0; iy<this.squares.length; iy++) {
             let out_row = [alphabet[iy]]
@@ -324,8 +350,4 @@ export class Board {
         }
         console.log(" " + alphabet)
     }
-
-
 }
-
-export const b = new Board(8, 8, hyper_with_line)

@@ -1,4 +1,4 @@
-import {Point, Color, Vector} from './squares'
+import {Color, Vector} from './squares'
 
 const rook_like: Array<Vector> = [
     {"x": 1, "y":0}, 
@@ -14,15 +14,13 @@ const bishop_like: Array<Vector> = [
 ]
 
 export class Piece {
-    position: Point;
     move_vectors: Array<Vector>;
     move_continuous: boolean;
     color: Color;
     piece_char: string;
     sprite_str: string;
     img: HTMLImageElement;
-    constructor(position: Point, color: Color){
-        this.position = position;
+    constructor(color: Color){
         this.color = color;
         this.piece_char = "p";
     }
@@ -39,8 +37,8 @@ export class Piece {
 
 export class King extends Piece {
     unmoved: boolean;
-    constructor(position: Point, color: Color){
-        super(position, color);
+    constructor(color: Color){
+        super(color);
         this.move_vectors = rook_like.concat(bishop_like);
         this.move_continuous = false;
         this.unmoved = true;
@@ -51,8 +49,8 @@ export class King extends Piece {
 }
 
 export class Queen extends Piece {
-    constructor(position: Point, color: Color){
-        super(position, color);
+    constructor(color: Color){
+        super(color);
         this.move_vectors = rook_like.concat(bishop_like);
         this.move_continuous = true;
         this.piece_char = (this.color == "white") ? "Q" : "q";
@@ -62,8 +60,8 @@ export class Queen extends Piece {
 
 export class Rook extends Piece {
     unmoved: boolean;
-    constructor(position: Point, color: Color){
-        super(position, color);
+    constructor(color: Color){
+        super(color);
         this.move_vectors = rook_like;
         this.move_continuous = true;
         this.unmoved = true;
@@ -73,16 +71,16 @@ export class Rook extends Piece {
 }
 
 export class Knight extends Piece {
-    constructor(position: Point, color: Color){
-        super(position, color);
+    constructor(color: Color){
+        super(color);
         this.move_vectors = [
             {"x": -1, "y": -2},
             {"x": -2, "y": -1},
             {"x": -2, "y": 1},
-            {"x": -2, "y": 1},
+            {"x": -1, "y": 2},
             {"x": 1, "y": 2},
-            {"x": 1, "y": -2},
             {"x": 2, "y": 1},
+            {"x": 1, "y": -2},
             {"x": 2, "y": -1},
         ];
         this.move_continuous = false;
@@ -92,8 +90,8 @@ export class Knight extends Piece {
 }
 
 export class Bishop extends Piece {
-    constructor(position: Point, color: Color){
-        super(position, color);
+    constructor(color: Color){
+        super(color);
         this.move_vectors = bishop_like;
         this.move_continuous = true;
         this.piece_char = (this.color == "white") ? "B" : "b";
@@ -105,8 +103,8 @@ export class Pawn extends Piece {
     unmoved: boolean;
     direction: number;
     attack_vectors: Array<Vector>
-    constructor(position: Point, color: Color){
-        super(position, color);
+    constructor(color: Color){
+        super(color);
         this.direction = (color == "white") ? -1 : 1;
         this.move_vectors = [{"x": 0, "y": this.direction}];
         this.attack_vectors = [
