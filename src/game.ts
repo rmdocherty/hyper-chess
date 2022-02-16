@@ -9,8 +9,53 @@ var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 var rook_test: string = "r7/8/8/8/8/8/8/8";
 var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
+type Move = Square;
+
+class LabelPieceMap {
+    LabelToPiece: Map<string, Piece>; 
+    PieceToLabel: Map<Piece, string>;
+    constructor() {
+        this.LabelToPiece = new Map<string, Piece>();
+        this.PieceToLabel = new Map<Piece, string>();
+    }
+
+    get_piece(label: string): Piece | undefined{
+        return this.LabelToPiece.get(label);
+    }
+
+    get_label(piece: Piece): string | undefined {
+        return this.PieceToLabel.get(piece);
+    }
+
+    set(label: string, piece: Piece): void {
+        this.LabelToPiece.set(label, piece);
+        this.PieceToLabel.set(piece, label);
+    }
+
+    has_label(label: string): boolean {
+        return this.LabelToPiece.has(label);
+    }
+
+    has_piece(piece: Piece): boolean {
+        return this.PieceToLabel.has(piece);
+    }
+
+    delete_label(label: string): void {
+        const piece: Piece = this.LabelToPiece.get(label)
+        this.LabelToPiece.delete(label);
+        this.PieceToLabel.delete(piece);
+    }
+
+    delete_piece(piece: Piece): void {
+        const label: string = this.PieceToLabel.get(piece)
+        this.LabelToPiece.delete(label);
+        this.PieceToLabel.delete(piece);
+    }
+}
+
+
 export class Game {
-    LabelToPiece: Map<string, Piece>;
+    LabelToPiece: LabelPieceMap
     board: Board;
     enpassant_flag: Boolean;
     enpassant_sq : Square;
@@ -18,11 +63,11 @@ export class Game {
     game_state: number;
     constructor(bw: number, bh: number, loop_str: string = "", fen_str: string = "") {
         this.board = new Board(bw, bh, loop_str);
-        this.LabelToPiece = new Map<string, Piece>();
+        this.LabelToPiece = new LabelPieceMap();
         this.enpassant_flag = false;
         this.turn_counter = 0;
-        this.game_state = 0
-        this.gen_from_fen(fen_str)
+        this.game_state = 0;
+        this.gen_from_fen(fen_str);
     }
 
     gen_from_fen(fen_str: string): void {
@@ -47,7 +92,7 @@ export class Game {
                 x += 1
             }
             else {
-                x += parseInt(piece_str)
+                x += parseInt(piece_str);
             }
         }
     }
@@ -57,8 +102,8 @@ export class Game {
         if (chk_sq instanceof Forbidden) {
             return false;
         }
-        const label: string = chk_sq.label
-        if (this.LabelToPiece.has(label)) {
+        const label: string = chk_sq.label;
+        if (this.LabelToPiece.has_label(label)) {
             return false;
         }
         return true;
@@ -68,9 +113,9 @@ export class Game {
         if (chk_sq instanceof Forbidden) {
             return false;
         }
-        const label: string = chk_sq.label
-        if (this.LabelToPiece.has(label)) {
-            const piece: Piece = this.LabelToPiece.get(label);
+        const label: string = chk_sq.label;
+        if (this.LabelToPiece.has_label(label)) {
+            const piece: Piece = this.LabelToPiece.get_piece(label);
             if (piece.color == color) {
                 return false;
             }
@@ -78,14 +123,53 @@ export class Game {
         return true;
     }
 
-    public find_valid_moves(piece: Piece) {
-        let valid_moves: Array<Square> = []
-        // TODO: make an inverted version of map so we can find a piece's position
-        // May be best to make a class that just copies the get/set/delete/has interface but automatically updates both directions.
+    public find_valid_moves(piece: Piece): Array<Move> {
+        let valid_moves: Array<Square> = [];
 
         for (let mv of piece.move_vectors) {
-            const current_sq = this.board.get_square()
+            const current_sq_label: string = this.LabelToPiece.get_label(piece);
+            const current_point: Point = label_to_point(current_sq_label);
+            const current_sq: Square = this.board.get_square(current_point)
+            if (piece.move_continuous == true) {
+                valid_moves = this.raycast(piece, current_sq, mv, valid_moves);
+            }
+            else {
+                const new_point: Point = {"x": current_point.x + mv.x, "y": current_point.y + mv.y}
+                const new_sq: Square = this.board.get_square(new_point)
+                if (this.check_if_square_takeable(new_sq, piece.color)) {
+                    valid_moves.push(new_sq)
+                }
+            }
         }
+        return valid_moves
+    }
+
+    raycast(piece: Piece, start_sq: Square, mv: Vector, valid_moves: Array<Move>): Array<Move> {
+        let current_sq: Square = start_sq;
+        let quit: boolean = false;
+        while (quit == false) {
+            valid_moves = this.hypersquare_check(piece, current_sq, mv, valid_moves)
+
+            if (this.check_if_sq_empty(current_sq)) {
+                valid_moves.push(current_sq)
+            }
+            else if (this.check_if_square_takeable(current_sq, piece.color)){
+                valid_moves.push(current_sq)
+                // Set quit to true here so we can't skip over opponent's pieces
+                quit = true
+            }
+            else {
+                quit = true
+            }
+            // Only update square if you've not hit a forbidden square - will we get out of range error at some point?
+            if (quit == false) {
+                const p = current_sq.point
+                current_sq = this.board.get_square_by_x_y(p.x + mv.x, p.y + mv.y)
+            }
+        }
+
+
+        return valid_moves
     }
 
 }

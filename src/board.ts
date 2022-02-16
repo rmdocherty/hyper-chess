@@ -49,6 +49,11 @@ export class Board {
         return sq;
     }
 
+    public get_square_by_x_y(x: number, y: number) : Square {
+        const sq = this.squares[y][x];
+        return sq;
+    }
+
     public set_square(label: string | Point, to_set: Square) : void {
         let p: Point;
         if (typeof label == "string") {
