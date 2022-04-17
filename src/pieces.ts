@@ -1,17 +1,17 @@
-import {Color, Vector} from './squares'
+import {Color, Point, Vector} from './squares'
 
 const rook_like: Array<Vector> = [
-    {"x": 1, "y":0}, 
-    {"x": -1, "y":0}, 
-    {"x": 0, "y":1}, 
-    {"x": 0, "y":-1}
-]
+    new Point(1, 0),
+    new Point(-1, 0), 
+    new Point(0, 1),
+    new Point(0, -1)
+];
 const bishop_like: Array<Vector> = [
-    {"x": 1, "y":1}, 
-    {"x": -1, "y":1}, 
-    {"x": 1, "y":-1}, 
-    {"x": -1, "y":-1}
-]
+    new Point(1, 1),
+    new Point(-1, 1),
+    new Point(1, -1),
+    new Point(-1, -1)
+];
 
 export class Piece {
     move_vectors: Array<Vector>;
@@ -74,14 +74,14 @@ export class Knight extends Piece {
     constructor(color: Color){
         super(color);
         this.move_vectors = [
-            {"x": -1, "y": -2},
-            {"x": -2, "y": -1},
-            {"x": -2, "y": 1},
-            {"x": -1, "y": 2},
-            {"x": 1, "y": 2},
-            {"x": 2, "y": 1},
-            {"x": 1, "y": -2},
-            {"x": 2, "y": -1},
+            new Point(-1, 2),
+            new Point(-2, -1),
+            new Point(-2, 1),
+            new Point(-1, -2),
+            new Point(1, 2),
+            new Point(2, 1), 
+            new Point(1, -2), 
+            new Point(2, -1), 
         ];
         this.move_continuous = false;
         this.piece_char = (this.color == "white") ? "N" : "n";
@@ -105,11 +105,11 @@ export class Pawn extends Piece {
     attack_vectors: Array<Vector>
     constructor(color: Color){
         super(color);
-        this.direction = (color == "white") ? -1 : 1;
-        this.move_vectors = [{"x": 0, "y": this.direction}];
+        this.direction = (color == "white") ? 1 : -1;
+        this.move_vectors = [new Point(0, this.direction)];
         this.attack_vectors = [
-            {"x": 1, "y": this.direction}, 
-            {"x": -1, "y": this.direction}
+            new Point(1, this.direction),
+            new Point(-1, this.direction)
         ];
         this.move_continuous = false;
         this.unmoved = true;

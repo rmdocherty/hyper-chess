@@ -3,28 +3,45 @@ export const WHOLE_BOARD_WIDTH: number = 16
 export const WHOLE_BOARD_HEIGHT: number = 16
 export const alphabet: string = "abcdefghijklmnop";
 
-//========TYPES========
-export type Point = {
+
+//========POINTS AND VECTORS========
+export class Point {
     x: number;
     y: number;
+    label: string;
+    constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+        this.label = x_y_to_label(x, y);
+    }
+
+    public add(b: Point): Point {
+        return new Point(this.x + b.x, this.y + b.y);
+    }
+
+    public mul(b: Point): Point {
+        return new Point(this.x * b.x, this.y * b.y);
+    }
 }
 
 //lazy but vectors are effectively just points - defined for clarity
 export type Vector = Point
 export type Color = "white" | "black"
+export type Label = string
+export type Align = "x" | "y" | "t" | "b"
 
 
-export function label_to_point(label: string): Point {
+export function label_to_point(label: Label): Point {
     const x_chr: string = label[0];
     const y_chr: string = label[1];
-    const x: number = alphabet.indexOf[x_chr];
-    const y: number = alphabet.indexOf[y_chr];
-    const p = {"x": x, "y": y};
+    const x: number = alphabet.indexOf(x_chr);
+    const y: number = alphabet.indexOf(y_chr);
+    const p = new Point(x, y);
     return p;
 }
 
 export function x_y_to_label(x: number, y: number): string {
-    return alphabet[x] + alphabet[y]
+    return alphabet[x] + alphabet[y];
 }
 
 
@@ -37,7 +54,7 @@ export class Square {
     */
     point: Point;
     color: Color;
-    label: string;
+    label: Label;
     constructor(point: Point){
         this.point = point;
         this.color = ((point.x + point.y) % 2 == 0) ? "black" : "white";
@@ -78,18 +95,18 @@ export class Hyper extends Square {
         }
         //Vectors that map the old move vector to the new one
         //(new_x, new_y) = (old_x * invert_x, old_y * invert_ y)
-        this.b_invert = {"x": 1, "y":1};
-        this.r_invert = {"x": 1, "y":1};
+        this.b_invert = new Point(1, 1);
+        this.r_invert = new Point(1, 1);
     }
 
     public invert(mv: Vector) : Vector{
         //When a continuous piece lands on a HS, remap its move vector for later
         let out_vec: Vector;
         if (mv.x == 0 || mv.y == 0) { //this implies we have a rook
-            out_vec = {"x": mv.x * this.r_invert.x, "y": mv.y * this.r_invert.y};
+            out_vec = mv.mul(this.r_invert);
         }
         else { //else mapping bishop style
-            out_vec = {"x": mv.x * this.b_invert.x, "y": mv.y * this.b_invert.y};
+            out_vec = mv.mul(this.b_invert);
         }
         //note this uses move vector logic, not piece logic so works for queens etc
         return out_vec;
@@ -114,15 +131,15 @@ export class Arch extends Hyper {
     Connect same sides of the board and map direction vectors appropriately. 
     */
     dir: Number
-    constructor(point: Point, link_sqs: Array<Point>, align: String) {
+    constructor(point: Point, link_sqs: Array<Point>, align: Align) {
         super(point, link_sqs);
         if (align == "x") {
-            this.b_invert = {"x": -1, "y":1};
-            this.r_invert = {"x": -1, "y":1};
+            this.b_invert = new Point(-1, 1)//{"x": -1, "y":1};
+            this.r_invert = new Point(-1, 1)//{"x": -1, "y":1};
         }
         else if (align == "y"){
-            this.b_invert = {"x": 1, "y":-1};
-            this.r_invert = {"x": 1, "y":-1};
+            this.b_invert = new Point(1, -1)//{"x": 1, "y":-1};
+            this.r_invert = new Point(1, -1)//{"x": 1, "y":-1};
         }
         else {
             throw new EvalError("Align must be string value of x or y");
@@ -132,17 +149,17 @@ export class Arch extends Hyper {
 
 export class Circle extends Hyper {
     dir: Number
-    constructor(point: Point, link_sqs: Array<Point>, align: String) {
+    constructor(point: Point, link_sqs: Array<Point>, align: Align) {
         super(point, link_sqs);
-        this.b_invert = {"x": -1, "y":-1}; //same in both cases
+        this.b_invert = new Point(-1, -1); //same in both cases
         if (align == "t") {
-            this.r_invert = {"x": -1, "y":1};
+            this.r_invert = new Point(-1, 1);
         }
         else if (align == "b"){
-            this.r_invert = {"x": 1, "y":-1};
+            this.r_invert = new Point(1, -1);
         }
         else {
-            throw new EvalError("Align must be string value of x or y");
+            throw new EvalError("Align must be string value of t or b");
         }
     }
 
@@ -150,10 +167,10 @@ export class Circle extends Hyper {
         //Overwrites old method
         let out_vec: Vector;
         if (mv.x == 0 || mv.y == 0) { //transpose the move vector i.e (0, n) -> (n, 0) with (or without) a sign change
-            out_vec = {"x": mv.y * this.r_invert.x, "y": mv.x * this.r_invert.y};
+            out_vec = mv.mul(this.r_invert);
         }
         else { //else mapping bishop style
-            out_vec = {"x": mv.x * this.b_invert.x, "y": mv.y * this.b_invert.y};
+            out_vec = mv.mul(this.b_invert);
         }
         return out_vec;
     }

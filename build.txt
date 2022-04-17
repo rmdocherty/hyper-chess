@@ -1,0 +1,3 @@
+npm run build
+node chess-bundle.js (to run as a script - doesn't work due to Image() in pieces.ts)
+npx webpack serve
