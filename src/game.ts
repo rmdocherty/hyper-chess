@@ -376,4 +376,4 @@ export class Game {
     }
 }
 
-export var g = new Game(8, 8, hyper_board_str, base_game_FEN);
+export var g = new Game(8, 8, hyper_board_str, rook_test);
