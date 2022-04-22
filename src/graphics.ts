@@ -178,7 +178,8 @@ function draw_vector(vector: Array<Square>, graphics_board: VisualBoard, mode:st
         }
         else {
             gfx_sq.draw_circle()
-        } */
+        }
+        */
         gfx_sq.draw(mode)
         
         const label: Label = sq.label
@@ -193,11 +194,68 @@ function draw_pieces(graphics_board, LabelPieceMap): void{
 
     for (let [label, piece] of LabelPieceMap.LabelToPiece) {
         const point: Point = label_to_point(label)//piece.position
-        console.log(piece)
+        
         const v_sq: Visual_Square = graphics_board[point.y][point.x]
         v_sq.draw_sprite(piece.img)
     }
 }
+
+function get_angles(loop: Array<Square>) : Array<Array<number>> {
+    let angle: number = 180 / loop.length
+    let total_angles = 100
+
+    let all_angles : Array<Array<number>> = []
+
+    for (let i = 0; i < loop.length; i++) {
+        let angles: Array<number> = []
+        for (let j = 0; j < total_angles; j++){
+            angles.push(i * angle + j / total_angles)
+        }         all_angles.push(angles)
+
+   }
+    return all_angles
+}
+
+function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_loc: Array<number>): any { //Array<Array<Point>, Array<number>>
+    const [r1, r2] = radii
+    const [ax, ay] = anchor_loc
+    let r1_points: Array<Point> = []
+    let r2_points: Array<Point> = []
+
+    // Compue midpoint
+    const len: number = angles.length-1
+    const mid_angle: number = angles[len][angles[len].length-1] - angles[0][0]
+    const xm: number = ax + r2/r1 * Math.cos(mid_angle)
+    const ym: number = ay + r2/r1 * Math.sin(mid_angle)
+
+
+    for(let angle of angles){
+        for (let subangle of angle) {
+            let rad: number = subangle * Math.PI / 180
+            let x1: number = ax + r1 * Math.cos(rad)
+            let y1: number = ay + r1 * Math.sin(rad)
+            let x2: number = ax + r2 * Math.cos(rad)
+            let y2: number = ay + r2 * Math.sin(rad)
+            //console.log(rad)
+            r1_points.push(new Point(x1, y1))
+            r2_points.push(new Point(x2, y2))
+        }
+    }
+    
+    r2_points = r2_points.reverse()
+    const points: Array<Point> = r1_points.concat(r2_points)
+    return [points, [xm, ym]]
+}
+
+function compute_anchor(loop: Array<Point>) {
+    const [startp, endp]: Array<Point> = [loop[0], loop[loop.length-1]]
+    const dx: number = endp.x - startp.x, dy: number = endp.y - startp.y
+    
+
+}
+
+
+
 
 var visual_board: VisualBoard = []
 var currently_highlighted = []
@@ -259,7 +317,7 @@ function check_click(x: Pixel, y: Pixel, visual_board: VisualBoard): void{
             
             if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed
                 draw_board(visual_board)
-                console.log(g.LabelPiece)
+                
                 draw_pieces(visual_board, g.LabelPiece)
                 g.global_update = false
             }

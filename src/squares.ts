@@ -135,11 +135,11 @@ export class Arch extends Hyper {
         super(point, link_sqs);
         // TODO: this doesn't work if the angle of approach for bishops or queens is greater than 90
         // Also TODO: an even arch lets bishop swap colours - this is super weird consequence
-        if (align == "x") {
+        if (align == "x" || align == "y") {
             this.b_invert = new Point(-1, 1)//{"x": -1, "y":1};
             this.r_invert = new Point(-1, 1)
         }
-        else if (align == "y"){
+        else if (align == "t" || align == "b"){
             this.b_invert = new Point(1, -1)
             this.r_invert = new Point(1, -1)
         }

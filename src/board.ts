@@ -15,7 +15,8 @@ type LoopType = "loop" | "pair" | "single"
 type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
 
 const CHAR_TO_LOOP = {"s": Hyper, "l": Link, "c": Circle, "a": Arch, "n": Square, "f": Forbidden, "h": Hyper};
-const ALIGN_TO_DIR = {"x": [-1,1], "y": [1, 1], "t": [1, 1], "b": [1, -1]}
+//NB THIS IS DEIFNED LEFT TO RIGHT BOTTOM TO TOP I.E ASSUMES START AND END POINTS DEFINED THAT WAY
+const ALIGN_TO_DIR = {"x": [-1,-1], "y": [1, 1], "t": [1, 1], "b": [1, -1]}
 
 
 export class Board extends Array {
@@ -163,23 +164,19 @@ export class Board extends Array {
                 this.loops.push(desc);
             }
             else if (desc[1] == "loop"){
+                let line_desc: LoopDesc = desc
+                let line_points: Array<Point>
                 if (desc[2] == "l") {
-                    const line_points: Array<Point> = this.make_line(desc)
-                    let line_desc: LoopDesc = desc
-                    line_desc[3] = line_points
-                    this.loops.push(line_desc); //problem here: 
+                    line_points = this.make_line(desc);
                 }
-                /*
                 else if (desc[2] == "a") {
-                    const line_points: Array<Point> = this.make_arch(desc)
-                    let line_desc: LoopDesc = desc
-                    line_desc[3] = line_points
-                    this.loops.push(line_desc); //problem here: 
-                }*/
-
-                else {
-                    throw new Error("New loop type not yet implemented")
+                    line_points = this.make_arch(desc);
                 }
+                else {
+                    throw new Error("New loop type not yet implemented");
+                }
+                line_desc[3] = line_points;
+                this.loops.push(line_desc); //problem here: 
             }
             else { //TODO: implement loops
                 throw new Error("New loop types not yet implemented");
@@ -200,7 +197,6 @@ export class Board extends Array {
         let points: Array<Point> = []
         const [startp, endp]: Array<Point> = loop_desc[3];
         const dx: Number = endp.x - startp.x
-        //console.log(dx)
         // Add the line - loop across whole board, if already set don't set again
         for (let i=0; i<WHOLE_BOARD_HEIGHT; i++) {
             let p: Point
@@ -235,6 +231,73 @@ export class Board extends Array {
         // Reset end points of array - works as we go from 0 to end in loop
         points[0] = p0
         points[points.length-1] = p1
+        return points
+    }
+
+    make_diag(point: Point, L: number, dir: Array<number>, align: Align): Array<Square>{
+        let squares: Array<Square> = []
+        for (let i=0; i<Math.floor(L / 2)+1;i++){
+            let x: number = point.x + dir[0] * i, y: number = point.y + dir[1] * i;
+            let f_lx: number  = x + dir[0] * 1, f_ly: number  = y + dir[1] * 1;
+            let b_lx: number  = x - dir[0] * 1, b_ly: number  = y - dir[1] * 1;
+            const p: Point = new Point(x, y);
+            const fp: Point = new Point(f_lx, f_ly);
+            const bp: Point = new Point(b_lx, b_ly);
+            let sq: Square;
+            if (i==0) {
+                sq = new Arch(p, [fp], align);
+            }
+            else {
+                sq = new Link(p, [bp, fp]);
+            }
+            // SIDE EFFECT
+            this[y][x] = sq;
+            squares.push(sq)
+        }
+        return squares
+    }
+
+    remap_links(squares: Array<Square>) {
+        const len: number = squares.length
+        for (let i=0; i<len; i++) {
+            let sq: Hyper = squares[i] as Hyper
+            if (i==0) {
+                sq.link_sqs = [squares[1].point]
+            }
+            else if (i==len-1){
+                sq.link_sqs = [squares[i-1].point]
+            }
+            else {
+                sq.link_sqs = [squares[i-1].point, squares[i+1].point]
+            }
+        }
+    }
+
+    make_arch(loop_desc: LoopDesc): Array<Point> {
+        // Setup problem
+        const [startp, endp]: Array<Point> = loop_desc[3];
+        const align: Align = loop_desc[0]
+        let dir: Array<number> = ALIGN_TO_DIR[align];
+        // Lengths
+        const dx: number = endp.x - startp.x, dy: number = endp.y - startp.y;
+        const L: number = Math.max(Math.abs(dx), Math.abs(dy));
+        console.log(loop_desc, L)
+        // Create first half
+        const first_half_squares: Array<Square> = this.make_diag(startp, L, dir, align)
+        // Remap dir and create second half
+        if (align == 'x' || align == 'y') {
+            dir[1] = dir[1] * -1
+        }
+        else {
+            dir[0] = dir[0] * -1
+        }
+        const second_half_squares: Array<Square> = this.make_diag(endp, L, dir, align)
+        second_half_squares.reverse()
+        const squares: Array<Square> = first_half_squares.concat(second_half_squares)
+        this.remap_links(squares)
+        
+        const points: Array<Point> = squares.map(s => s.point)
+
         return points
     }
 

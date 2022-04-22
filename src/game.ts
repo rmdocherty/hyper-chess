@@ -14,7 +14,8 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
 var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 var test_line: string = "xLdhmh%yLgdgm"
 var test_pair: string = "xadjdg"//"yaedgd" or %xamjmg%yagdjd
-var hyper_board_str: string = "xAdfdk" //%xadldj%yagmim
+var test_arch: string = "xAdjdg%tAfmkm%bAfdkd%yAmgmj" //%xadldj%yagmim
+var single_arch: string = "xAdkdf"
 var rook_test: string = "r3k/8/8/8/4p/8/5P/2R";
 var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
@@ -249,7 +250,6 @@ export class Game {
     }
 
     hypersquare_check(piece: Piece, current_sq: Square, mv: Vector, valid_moves: Array<Move>): Array<Move> {
-        //const label: string = current_sq.label;
         if (current_sq instanceof Hyper  && !valid_moves.includes(current_sq)) { //!valid_moves.includes(current_sq)
             valid_moves.push(current_sq)
             for (let link_point of current_sq.link_sqs) {
@@ -263,7 +263,7 @@ export class Game {
                 else {
                     this.hyper_tracker = false;
                 }
-                console.log(mv, this.hyper_tracker)
+                //console.log(mv, this.hyper_tracker)
                 valid_moves = this.raycast(piece, link_sq, mv, valid_moves);
             }
         }
@@ -274,7 +274,6 @@ export class Game {
         let current_sq: Square = start_sq;
         let quit: boolean = false;
         while (quit == false) {
-            //console.log(current_sq, mv)
             valid_moves = this.hypersquare_check(piece, current_sq, mv, valid_moves);
 
             if (this.check_if_sq_empty(current_sq, piece)) {
@@ -395,4 +394,4 @@ export class Game {
     }
 }
 
-export var g = new Game(8, 8, test_pair, rook_test);
+export var g = new Game(8, 8, single_arch, rook_test);
