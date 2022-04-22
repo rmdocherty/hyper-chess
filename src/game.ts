@@ -12,7 +12,9 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
 */
 
 var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-var hyper_board_str: string = "yaedgd" //%xadldj%yagmim
+var test_line: string = "xLdhmh%yLgdgm"
+var test_pair: string = "xadjdg"//"yaedgd" or %xamjmg%yagdjd
+var hyper_board_str: string = "xAdfdk" //%xadldj%yagmim
 var rook_test: string = "r3k/8/8/8/4p/8/5P/2R";
 var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
@@ -124,10 +126,17 @@ export class Game {
 
     check_if_sq_empty(chk_sq: Square, piece: Piece): boolean{
         // Check if square occupied by anything
+        let label: string
         if (chk_sq instanceof Forbidden) {
             return false;
         }
-        const label: string = chk_sq.label;
+        try { // really lazy: this is in case we go out of bounds
+            label = chk_sq.label;
+        }
+        catch (TypeError) {
+            return false
+        }
+        
         if (this.LabelPiece.has(label)) {
             const other_piece: Piece = this.LabelPiece.get(label) as Piece;
             if (other_piece == piece) {
@@ -139,10 +148,19 @@ export class Game {
     }
 
     check_if_square_takeable(chk_sq: Square, color: Color) : boolean {
+        let label:string
         if (chk_sq instanceof Forbidden) {
             return false;
         }
-        const label: string = chk_sq.label;
+
+        try {
+            label = chk_sq.label;
+        }
+        catch (TypeError) {
+            return false
+        }
+
+        label = chk_sq.label;
         if (this.LabelPiece.has(label)) {
             const piece: Piece = this.LabelPiece.get(label) as Piece;
             if (piece.color == color) {
@@ -231,9 +249,8 @@ export class Game {
     }
 
     hypersquare_check(piece: Piece, current_sq: Square, mv: Vector, valid_moves: Array<Move>): Array<Move> {
-        const label: string = current_sq.label;
+        //const label: string = current_sq.label;
         if (current_sq instanceof Hyper  && !valid_moves.includes(current_sq)) { //!valid_moves.includes(current_sq)
-            
             valid_moves.push(current_sq)
             for (let link_point of current_sq.link_sqs) {
                 const lx: number = link_point.x;
@@ -287,38 +304,40 @@ export class Game {
         const new_p: Point = new_sq.point
         const piece: Piece = this.LabelPiece.get(old_label) as Piece
 
+        // NORMAL MOVE LOGIC
         if (this.LabelPiece.has(new_label)) {
             this.LabelPiece.delete(new_label)
         }
         this.LabelPiece.delete(old_label)
         this.LabelPiece.set(new_label, piece)
         
+        // DOUBLE MOVE
         if ((piece instanceof Pawn) && ((old_p.y - new_p.y)**2 == 4)) {
             const enp_sq: Square = this.board[old_p.y + piece.direction][old_p.x]
             this.enpassant_sq = enp_sq
             piece.unmoved = false
-        }
+        } // ENPASASNT
         else if ((piece instanceof Pawn) && (new_sq == this.enpassant_sq)){
             const enp_victim: Square = this.board[this.enpassant_sq.point.y - piece.direction][this.enpassant_sq.point.x]
             this.LabelPiece.delete(enp_victim.label)
             piece.unmoved = false
             this.global_update = true
             this.enpassant_sq = null
-        }
+        } // BLACK PROMOTION
         else if ((piece instanceof Pawn) && (piece.color == "black") && (new_p.y == this.board.base_board_inds[1])) {
             const queen: Queen = new Queen(piece.color)
             this.LabelPiece.delete(new_label)
             this.LabelPiece.set(new_label, queen)
             this.global_update = true
             this.enpassant_sq = null
-        }
+        } // WHITE PROMOTION
         else if ((piece instanceof Pawn) && (piece.color == "white") && (new_p.y == this.board.base_board_inds[3])) {
             const queen: Queen = new Queen(piece.color)
             this.LabelPiece.delete(new_label)
             this.LabelPiece.set(new_label, queen)
             this.global_update = true
             this.enpassant_sq = null
-        }
+        } // CASTLING
         else if ((piece instanceof King) && ((old_p.x - new_p.x)**2 == 4)) {
             const dir: number = (old_p.x - new_p.x) / 2 
             const rook_castle_x: number = (old_p.x - new_p.x > 0) ? this.board.base_board_inds[0] : this.board.base_board_inds[2]
@@ -328,7 +347,7 @@ export class Game {
             this.LabelPiece.delete(rook)
             this.LabelPiece.set(new_rook_label, rook)
             this.global_update = true
-        }
+        } // SET MOVED AND RESET EN PASSANT
         else if ((piece instanceof Pawn) || (piece instanceof King) || (piece instanceof Rook)) {
             piece.unmoved = false
             this.enpassant_sq = null
@@ -376,4 +395,4 @@ export class Game {
     }
 }
 
-export var g = new Game(8, 8, hyper_board_str, rook_test);
+export var g = new Game(8, 8, test_pair, rook_test);

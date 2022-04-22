@@ -249,14 +249,14 @@ function check_click(x: Pixel, y: Pixel, visual_board: VisualBoard): void{
                     currently_highlighted = currently_highlighted.concat(moves)
                 }
                 else if (is_move) {
+                    // TAKE A PIECE
                     g.make_move(currently_highlighted[0], v_sq.real_sq)
                     draw_vector(currently_highlighted, visual_board, "default")
                     currently_highlighted = []
-                    // TAKE A PIECE
                 }
             }
-            //draw_board(visual_board)
-            //draw_pieces(visual_board, g.LabelPiece)
+            
+            
             if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed
                 draw_board(visual_board)
                 console.log(g.LabelPiece)
@@ -267,7 +267,6 @@ function check_click(x: Pixel, y: Pixel, visual_board: VisualBoard): void{
                 draw_vector(currently_highlighted, visual_board, "active")
             }
             
-            //draw_pieces(visual_board, g.LabelPiece)
         }
     }
     if (on_board == false) {

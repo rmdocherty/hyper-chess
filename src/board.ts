@@ -15,6 +15,7 @@ type LoopType = "loop" | "pair" | "single"
 type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
 
 const CHAR_TO_LOOP = {"s": Hyper, "l": Link, "c": Circle, "a": Arch, "n": Square, "f": Forbidden, "h": Hyper};
+const ALIGN_TO_DIR = {"x": [-1,1], "y": [1, 1], "t": [1, 1], "b": [1, -1]}
 
 
 export class Board extends Array {
@@ -161,6 +162,25 @@ export class Board extends Array {
                 this.add_pair(desc);
                 this.loops.push(desc);
             }
+            else if (desc[1] == "loop"){
+                if (desc[2] == "l") {
+                    const line_points: Array<Point> = this.make_line(desc)
+                    let line_desc: LoopDesc = desc
+                    line_desc[3] = line_points
+                    this.loops.push(line_desc); //problem here: 
+                }
+                /*
+                else if (desc[2] == "a") {
+                    const line_points: Array<Point> = this.make_arch(desc)
+                    let line_desc: LoopDesc = desc
+                    line_desc[3] = line_points
+                    this.loops.push(line_desc); //problem here: 
+                }*/
+
+                else {
+                    throw new Error("New loop type not yet implemented")
+                }
+            }
             else { //TODO: implement loops
                 throw new Error("New loop types not yet implemented");
             }
@@ -174,6 +194,48 @@ export class Board extends Array {
         if (loop_string.length > 0){
             this.make_loop(loop_string);
         }
+    }
+
+    make_line(loop_desc: LoopDesc) : Array<Point> {
+        let points: Array<Point> = []
+        const [startp, endp]: Array<Point> = loop_desc[3];
+        const dx: Number = endp.x - startp.x
+        //console.log(dx)
+        // Add the line - loop across whole board, if already set don't set again
+        for (let i=0; i<WHOLE_BOARD_HEIGHT; i++) {
+            let p: Point
+            if (dx == 0) {
+                p = new Point(endp.x, i)
+                const sq: Square = new Square(p)
+                if (this[i][endp.x] instanceof Forbidden){
+                    this[i][endp.x] = sq
+                }
+            }
+            else {
+                p = new Point(i, endp.y)
+                const sq: Square = new Square(p)
+                if (this[endp.y][i] instanceof Forbidden){
+                    this[endp.y][i] = sq
+                }
+            }
+            points.push(p)
+        }
+        // Now add endpoints
+        let p0: Point, p1: Point
+        if (dx == 0) {
+            p0 = new Point(endp.x, 0)
+            p1 = new Point(endp.x, WHOLE_BOARD_WIDTH-1)
+            this.add_pair(["x", "pair", "s", [p0, p1]])
+        }
+        else {
+            p0 = new Point(0, endp.y)
+            p1 = new Point(WHOLE_BOARD_HEIGHT-1, endp.y)
+            this.add_pair(["x", "pair", "s", [p0, p1]])
+        }
+        // Reset end points of array - works as we go from 0 to end in loop
+        points[0] = p0
+        points[points.length-1] = p1
+        return points
     }
 
 }

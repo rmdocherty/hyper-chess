@@ -133,13 +133,15 @@ export class Arch extends Hyper {
     dir: Number
     constructor(point: Point, link_sqs: Array<Point>, align: Align) {
         super(point, link_sqs);
+        // TODO: this doesn't work if the angle of approach for bishops or queens is greater than 90
+        // Also TODO: an even arch lets bishop swap colours - this is super weird consequence
         if (align == "x") {
             this.b_invert = new Point(-1, 1)//{"x": -1, "y":1};
-            this.r_invert = new Point(-1, 1)//{"x": -1, "y":1};
+            this.r_invert = new Point(-1, 1)
         }
         else if (align == "y"){
-            this.b_invert = new Point(1, -1)//{"x": 1, "y":-1};
-            this.r_invert = new Point(1, -1)//{"x": 1, "y":-1};
+            this.b_invert = new Point(1, -1)
+            this.r_invert = new Point(1, -1)
         }
         else {
             throw new EvalError("Align must be string value of x or y");
@@ -161,17 +163,5 @@ export class Circle extends Hyper {
         else {
             throw new EvalError("Align must be string value of t or b");
         }
-    }
-
-    public invert(mv: Vector) : Vector{
-        //Overwrites old method
-        let out_vec: Vector;
-        if (mv.x == 0 || mv.y == 0) { //transpose the move vector i.e (0, n) -> (n, 0) with (or without) a sign change
-            out_vec = mv.mul(this.r_invert);
-        }
-        else { //else mapping bishop style
-            out_vec = mv.mul(this.b_invert);
-        }
-        return out_vec;
     }
 }
