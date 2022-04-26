@@ -12,7 +12,7 @@ type Loop = Array<Square>;
 type EndChar = "s" | "l" | "c" | "a" | "n" | "f"
 type LoopEnds = Hyper | Link | Arch | Circle;
 type LoopType = "loop" | "pair" | "single"
-type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
+export type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
 
 const CHAR_TO_LOOP = {"s": Hyper, "l": Link, "c": Circle, "a": Arch, "n": Square, "f": Forbidden, "h": Hyper};
 //NB THIS IS DEIFNED LEFT TO RIGHT BOTTOM TO TOP I.E ASSUMES START AND END POINTS DEFINED THAT WAY
@@ -293,7 +293,11 @@ export class Board extends Array {
         }
         const second_half_squares: Array<Square> = this.make_diag(endp, L, dir, align)
         second_half_squares.reverse()
-        const squares: Array<Square> = first_half_squares.concat(second_half_squares)
+        let squares: Array<Square> = first_half_squares.concat(second_half_squares)
+        if (L%2==0) {
+            console.log('odd')
+            squares.splice(Math.floor(L/2), 1)
+        }
         this.remap_links(squares)
         
         const points: Array<Point> = squares.map(s => s.point)

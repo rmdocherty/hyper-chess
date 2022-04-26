@@ -14,8 +14,11 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
 var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 var test_line: string = "xLdhmh%yLgdgm"
 var test_pair: string = "xadjdg"//"yaedgd" or %xamjmg%yagdjd
-var test_arch: string = "xAdjdg%tAfmkm%bAfdkd%yAmgmj" //%xadldj%yagmim
+var test_arch: string = "xAdjdg%tAfmkm%bAfdkd%yAmfmj" //%xadldj%yagmim
 var single_arch: string = "xAdkdf"
+var single_arch_bottom: string = "tAfmkm"
+var hyper_original: string = "xAdldj%xAdgde%yAmlmj%yAmgme%tAemlm%bAedld"
+var cylindrical_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml"
 var rook_test: string = "r3k/8/8/8/4p/8/5P/2R";
 var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
@@ -86,7 +89,7 @@ export class Game {
         this.enpassant_flag = false;
         this.turn_counter = 0;
         this.game_state = 0;
-        this.hyper_tracker = false;
+        this.hyper_tracker = true;
         this.global_update = false;
         this.gen_from_fen(fen_str);
     }
@@ -256,15 +259,17 @@ export class Game {
                 const lx: number = link_point.x;
                 const ly: number = link_point.y;
                 const link_sq = this.board[ly][lx] as Hyper;
-                if (link_sq instanceof Hyper) {
-                    mv = current_sq.invert(mv);
-                    this.hyper_tracker = true;
+                if (!(link_sq instanceof Link) && !(valid_moves.includes(link_sq))) {
+                    //console.log(mv)
+                    mv = link_sq.invert(mv);
+                    //console.log("inverting!")
+                    //console.log(link_sq, mv)
+                    //this.hyper_tracker = true;
+                    valid_moves = this.raycast(piece, link_sq, mv, valid_moves);
                 }
-                else {
-                    this.hyper_tracker = false;
+                else if (!valid_moves.includes(link_sq)) {
+                    valid_moves = this.raycast(piece, link_sq, mv, valid_moves);
                 }
-                //console.log(mv, this.hyper_tracker)
-                valid_moves = this.raycast(piece, link_sq, mv, valid_moves);
             }
         }
         return valid_moves;
@@ -290,7 +295,13 @@ export class Game {
             // Only update square if you've not hit a forbidden square - will we get out of range error at some point?
             if (quit == false) {
                 const p = current_sq.point;
-                current_sq = this.board[p.y + mv.y][p.x + mv.x];
+                try {
+                    current_sq = this.board[p.y + mv.y][p.x + mv.x];
+                }
+                catch (TypeError) {
+                    quit = true
+                }
+                
             }
         }
         return valid_moves;
@@ -394,4 +405,4 @@ export class Game {
     }
 }
 
-export var g = new Game(8, 8, single_arch, rook_test);
+export var g = new Game(8, 8, cylindrical_chess, base_game_FEN);
