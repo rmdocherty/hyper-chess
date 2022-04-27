@@ -5,7 +5,7 @@ import { Piece } from './pieces'
 
 type Pixel = number
 
-const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1, 1, 0], "y": [0, 1, -1, 0]}
+const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1,-1, 0], "y": [0, 1, 1, 0]}
 const ALIGN_TO_OFFSET = {"t":[1, 0], "b": [1, 2], "x": [2, 1], "y": [0, 1]}
 
 const classic = {"bg": "#ebe5c0", "black": "#cab175", "white": "#e9daB5", 
@@ -183,8 +183,9 @@ function draw_vector(vector: Array<Square>, graphics_board: VisualBoard, mode:st
         }
         else {
             gfx_sq.draw_circle()
-        }
+        } 
         */
+        
         gfx_sq.draw(mode);
         
         const label: Label = sq.label;
@@ -205,8 +206,8 @@ function draw_pieces(graphics_board, LabelPieceMap): void{
 
 function get_angles(loop: Array<Point>, angle: number=180): Array<Array<number>> {
     let d_theta: number = angle / loop.length
-    console.log(d_theta)
-    let total_angles: number = 100;
+    //console.log(d_theta)
+    let total_angles: number = 250;
     let all_angles: Array<Array<number>> = [];
 
     for (let i = 0; i < loop.length; i++) {
@@ -287,8 +288,8 @@ function add_loop_squares(loop_desc: LoopDesc): void {
         //console.log(p, coords.length)
         visual_board[p.y][p.x] = new Visual_Square(g.board[p.y][p.x], coords[i], midpoints[i], "curved")
     }
-    
 }
+
 
 
 var visual_board: VisualBoard = []
@@ -298,7 +299,7 @@ window.onload = function() {
     visual_board = fill_canvas_bg()
     visual_board = fill_canvas_norm(visual_board)
     for (let l of g.board.loops){
-        if (l[2] == 'a') {
+        if (l[2] == 'f') {
             add_loop_squares(l)
         }
         else {
@@ -310,18 +311,6 @@ window.onload = function() {
                 visual_board[ls.y][ls.x] = new Visual_Square(g.board[ls.y][ls.x], points, midpoint, "square")
             }
         }
-        
-        /*
-        for (let ls of l[3]) {
-            let blx = x_offset_px + ls.x * SQ_W
-            let bly = y_offset_px + ls.y * SQ_W 
-            let points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
-            const midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
-            visual_board[ls.y][ls.x] = new Visual_Square(g.board[ls.y][ls.x], points, midpoint, "square")
-        }
-        */
-        
-        
     }   
     draw_board(visual_board)
     draw_pieces(visual_board, g.LabelPiece)

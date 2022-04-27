@@ -14,10 +14,12 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
 var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 var test_line: string = "xLdhmh%yLgdgm"
 var test_pair: string = "xadjdg"//"yaedgd" or %xamjmg%yagdjd
-var test_arch: string = "xAdjdg%tAfmkm%bAfdkd%yAmfmj" //%xadldj%yagmim
+var test_arch: string = "xAdgde%tAfmkm%bAfdkd%yAmjml" //%xadldj%yagmim
 var single_arch: string = "xAdkdf"
 var single_arch_bottom: string = "tAfmkm"
-var hyper_original: string = "xAdldj%xAdgde%yAmlmj%yAmgme%tAemlm%bAedld"
+var hyper_original: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAemlm%bAedld" //weird 
+var test_double_arch: string = "xAdgde%xAdjdl"
+//var hyper_original: string = "xAdldj%xAdgde%yAmlmj%yAmgme%tAemlm%bAedld"
 var cylindrical_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml"
 var rook_test: string = "r3k/8/8/8/4p/8/5P/2R";
 var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
@@ -191,7 +193,9 @@ export class Game {
             const current_point: Point = label_to_point(current_sq_label);
             const current_sq: Square = this.board.get_sq(current_point)
             if (piece.move_continuous == true) {
-                valid_moves = this.raycast(piece, current_sq, mv, valid_moves);
+                //valid_moves = this.raycast(piece, current_sq, mv, valid_moves);
+                const current_mv_moves: Array<Square> = this.raycast(piece, current_sq, mv, []);
+                valid_moves = valid_moves.concat(current_mv_moves)
             }
             else {
                 const new_point: Point = current_point.add(mv);
@@ -366,43 +370,6 @@ export class Game {
             this.global_update = false
         }
     }
-
-    public print_board() : void {
-        //Print out string repr of the board so we know what's going on
-        for (let iy=0; iy<this.board.length; iy++) {
-            let out_row = [alphabet[iy]];
-            let row = this.board[iy];
-            for (let sq of row) {
-                let out_char: string = "";
-                 
-                if (this.LabelPiece.has(sq.label)) {
-                    const piece: Piece = this.LabelPiece.get(sq.label) as Piece;
-                    out_char = piece.piece_char;
-                }
-                else if (sq instanceof Forbidden) {
-                    out_char = " ";
-                }
-                else if (sq instanceof Link) {
-                    out_char = "L";
-                }
-                else if (sq instanceof Arch) {
-                    out_char = "A";
-                }
-                else if (sq instanceof Circle) {
-                    out_char = "C";
-                }
-                else if (sq instanceof Hyper) {
-                    out_char = "H";
-                }
-                else {
-                    out_char = (sq.color == "black") ? "B" : "W";
-                }
-                out_row.push(out_char);
-            }
-            console.log(out_row.join(""));
-        }
-        console.log(" " + alphabet);
-    }
 }
 
-export var g = new Game(8, 8, cylindrical_chess, base_game_FEN);
+export var g = new Game(8, 8, hyper_original, base_game_FEN);
