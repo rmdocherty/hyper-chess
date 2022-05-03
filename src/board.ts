@@ -281,7 +281,6 @@ export class Board extends Array {
         // Lengths
         const dx: number = endp.x - startp.x, dy: number = endp.y - startp.y;
         const L: number = Math.max(Math.abs(dx), Math.abs(dy));
-        console.log(loop_desc, L)
         // Create first half
         const first_half_squares: Array<Square> = this.make_diag(startp, L, dir, align)
         // Remap dir and create second half
@@ -295,7 +294,6 @@ export class Board extends Array {
         second_half_squares.reverse()
         let squares: Array<Square> = first_half_squares.concat(second_half_squares)
         if (L%2==0) {
-            console.log('odd')
             squares.splice(Math.floor(L/2), 1)
         }
         this.remap_links(squares)

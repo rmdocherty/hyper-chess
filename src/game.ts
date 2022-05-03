@@ -21,6 +21,7 @@ var hyper_original: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAemlm%bAedld" //weird
 var test_double_arch: string = "xAdgde%xAdjdl"
 //var hyper_original: string = "xAdldj%xAdgde%yAmlmj%yAmgme%tAemlm%bAedld"
 var cylindrical_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml"
+var toroidal_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom%xLdbmb%xLdcmc%xLddmd%xLdmmm%xLdnmn%xLdomo"//"xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom"
 var rook_test: string = "r3k/8/8/8/4p/8/5P/2R";
 var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
@@ -103,9 +104,14 @@ export class Game {
         return sq
     }
 
-    gen_from_fen(fen_str: string): void {
-        let x = this.board.base_board_inds[0];
-        let y = this.board.base_board_inds[3];
+    gen_from_fen(fen_str: string) {
+        let x: number = this.board.base_board_inds[0];
+        let y: number = this.board.base_board_inds[3];
+        this.gen_from_generic_fen(fen_str, x, y)
+    }
+
+    gen_from_generic_fen(fen_str: string, x: number, y: number): void {
+        
         for (let piece_str of fen_str) {
             let lower_case_str: string = piece_str.toLowerCase();
             let color: Color = "white";
@@ -257,7 +263,7 @@ export class Game {
     }
 
     hypersquare_check(piece: Piece, current_sq: Square, mv: Vector, valid_moves: Array<Move>): Array<Move> {
-        if (current_sq instanceof Hyper  && !valid_moves.includes(current_sq)) { //!valid_moves.includes(current_sq)
+        if (current_sq instanceof Hyper  && !valid_moves.includes(current_sq) && this.check_if_sq_empty(current_sq, piece)) { //problem here: if piece on hypersquare then can move through it
             valid_moves.push(current_sq)
             for (let link_point of current_sq.link_sqs) {
                 const lx: number = link_point.x;
@@ -372,4 +378,4 @@ export class Game {
     }
 }
 
-export var g = new Game(8, 8, hyper_original, base_game_FEN);
+export var g = new Game(8, 8, toroidal_chess, base_game_FEN);

@@ -5,7 +5,7 @@ import { Piece } from './pieces'
 
 type Pixel = number
 
-const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1,-1, 0], "y": [0, 1, 1, 0]}
+const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1, 1, 0], "y": [0, 1, 1, 0]}
 const ALIGN_TO_OFFSET = {"t":[1, 0], "b": [1, 2], "x": [2, 1], "y": [0, 1]}
 
 const classic = {"bg": "#ebe5c0", "black": "#cab175", "white": "#e9daB5", 
@@ -26,7 +26,7 @@ canvas.width = canvas_w;
 const SQ_W: Pixel = 50;
 
 const whole_board_pixel_l: Pixel = (WHOLE_BOARD_WIDTH  + 5) * SQ_W;
-const whole_board_pixel_h: Pixel = (WHOLE_BOARD_HEIGHT + 2) * SQ_W;
+const whole_board_pixel_h: Pixel = (WHOLE_BOARD_HEIGHT + 1) * SQ_W;
 const x_offset_px: Pixel = Math.floor((canvas_w - whole_board_pixel_l) / 2);
 const y_offset_px: Pixel = Math.floor((canvas_h - whole_board_pixel_h) / 2);
 
@@ -163,7 +163,6 @@ function draw_board(graphics_board: VisualBoard): void{
     for (let row of graphics_board) {
         for (let g_sq of row) {
             if (g_sq.type == "curved"){
-                //console.log("drawing curve", g_sq)
                 g_sq.draw("default")
             }
             g_sq.draw("default")
@@ -206,7 +205,6 @@ function draw_pieces(graphics_board, LabelPieceMap): void{
 
 function get_angles(loop: Array<Point>, angle: number=180): Array<Array<number>> {
     let d_theta: number = angle / loop.length
-    //console.log(d_theta)
     let total_angles: number = 250;
     let all_angles: Array<Array<number>> = [];
 
@@ -227,6 +225,15 @@ function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_l
     let midpoints = [];
     let curve_points = [];
 
+    let flip: number = 1
+    if ((align == 'x' || align == 'y')) {
+        const b_inds = g.board.base_board_inds
+        const mid_y: number =  b_inds[1] + (b_inds[3] - b_inds[1]) / 2
+        if (ay / SQ_W > mid_y) {
+            flip = -1
+        }
+    }
+
     // Compute midpoint
     const len: number = angles.length-1;
     
@@ -234,18 +241,19 @@ function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_l
         let orient = ALIGN_TO_ORIENT[align]
         const mid_angle: number = angle[0] + (angle[angle.length-1] - angle[0])/2;
         const mid_rad: number = mid_angle * Math.PI / 180;
-        //console.log(mid_angle)
-        const xm: number = ax + (r1+0.5) * (orient[0] * Math.cos(mid_rad) + orient[1] * Math.sin(mid_rad)) * SQ_W;
-        const ym: number = ay + (r1+0.5) * (orient[2] * Math.cos(mid_rad) + orient[3] * Math.sin(mid_rad)) * SQ_W;
+        let xm: number = ax + (r1+0.5) * (orient[0] * Math.cos(mid_rad) + orient[1] * Math.sin(mid_rad)) * SQ_W;
+        let ym: number = ay + (r1+0.5) * (orient[2] * flip * Math.cos(mid_rad) + orient[3] * flip * Math.sin(mid_rad)) * SQ_W;
         let r1_points = []; //type these later!
         let r2_points = [];
         midpoints.push([xm, ym])
-        //console.log(angle)
         for (let subangle of angle) {
             let rad: number = subangle * Math.PI / 180;
             
-            let x: number = orient[0] * Math.cos(rad) + orient[1] * Math.sin(rad);
+            let x: number = orient[0] * Math.cos(rad) + orient[1] * Math.sin(rad)
             let y: number = orient[2] * Math.cos(rad) + orient[3] * Math.sin(rad)
+            y *= flip
+
+
             let x1: number = ax + r1 * x * SQ_W;
             let y1: number = ay + r1 * y * SQ_W;
             let x2: number = ax + r2 * x * SQ_W;
@@ -266,7 +274,6 @@ function compute_anchor(loop: Array<Point>, align: Align): any {
     const [startp, endp]: Array<Point> = [loop[0], loop[loop.length-1]];
     const offset = ALIGN_TO_OFFSET[align]
     const dx: number = endp.x - startp.x, dy: number = endp.y - startp.y;
-    console.log("dx", dx, "dy", dy)
     const delta: number = Math.max(Math.abs(dx), Math.abs(dy))
     const x: number = startp.x + (dx+offset[0])/2//Math.ceil(dx/2);
     const y: number = startp.y + (dy+offset[1])/2 //Math.ceil(dy/2);
@@ -279,15 +286,59 @@ function add_loop_squares(loop_desc: LoopDesc): void {
     const points: Array<Point> = loop_desc[3];
     const [anchor, delta] = compute_anchor(points, loop_desc[0]);
     const radii: Array<number> = [(delta-1)/2, (delta+1)/2]
-    console.log("radii", radii)
     const loop_angle: number = (loop_desc[2] == 'a') ? 180 : 270
     const angles: Array<Array<number>> = get_angles(points, loop_angle)
     const [coords, midpoints] = get_coords(angles, radii, anchor, loop_desc[0])
     for (let i=0;i<coords.length;i++){
         const p: Point = points[i]
-        //console.log(p, coords.length)
         visual_board[p.y][p.x] = new Visual_Square(g.board[p.y][p.x], coords[i], midpoints[i], "curved")
     }
+}
+
+function point_to_pixel(point: Point): Array<Pixel> {
+    return [x_offset_px + point.x * SQ_W,  y_offset_px + point.y * SQ_W]
+}
+
+function add_square(point: Point, bbox: Array<Pixel>=[]): void {
+    let points: Array<Array<Pixel>>
+    let midpoint: Array<Pixel>
+    let blx: Pixel, bly: Pixel, urx: Pixel, ury: Pixel
+    if (bbox.length == 0) {
+        [blx, bly] = point_to_pixel(point)
+        points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
+    }
+    else {
+        [blx, bly, urx, ury] = bbox
+        points = [[blx, bly], [urx, bly], [urx, ury], [blx, ury]]
+    }
+    midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
+    visual_board[point.y][point.x] = new Visual_Square(g.board[point.y][point.x], points, midpoint, "square")
+}
+
+function add_squares(loop_points: Array<Point>): void {
+    for (let ls of loop_points) {
+        add_square(ls)
+    }
+}
+
+function add_line_squares(loop_desc: LoopDesc): void {
+    const rhs_p: Point = loop_desc[3][0]
+    let [rx, ry]: Array<Pixel> = point_to_pixel(rhs_p)
+    const lhs_p: Point = loop_desc[3][loop_desc[3].length - 1]
+    let [lx, ly]: Array<Pixel> = point_to_pixel(lhs_p)
+    let l_bbox: Array<Pixel>, r_bbox: Array<Pixel>
+    if (loop_desc[0] == 'y') {
+        r_bbox = [rx, 0, rx+SQ_W, ry+SQ_W]
+        l_bbox = [lx, ly, lx+SQ_W, canvas_h]
+    }
+    else {
+        r_bbox = [0, ry, rx+SQ_W, ry+SQ_W]
+        l_bbox = [lx, ly, lx+rx+SQ_W, ly+SQ_W]
+    }
+    add_square(rhs_p, r_bbox)
+    add_square(lhs_p, l_bbox)
+    const rest_of_points: Array<Point> = loop_desc[3].slice(1, -1)
+    add_squares(rest_of_points)
 }
 
 
@@ -299,17 +350,15 @@ window.onload = function() {
     visual_board = fill_canvas_bg()
     visual_board = fill_canvas_norm(visual_board)
     for (let l of g.board.loops){
-        if (l[2] == 'f') {
+        if (l[2] == 'a') {
             add_loop_squares(l)
         }
+        else if (l[2] == 'l') {
+            add_line_squares(l)
+        }
+
         else {
-            for (let ls of l[3]) {
-                let blx = x_offset_px + ls.x * SQ_W
-                let bly = y_offset_px + ls.y * SQ_W 
-                let points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
-                const midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
-                visual_board[ls.y][ls.x] = new Visual_Square(g.board[ls.y][ls.x], points, midpoint, "square")
-            }
+            add_squares(l[3])
         }
     }   
     draw_board(visual_board)
