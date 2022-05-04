@@ -11,19 +11,26 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
     npx webpack serve
 */
 
-var base_game_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-var test_line: string = "xLdhmh%yLgdgm"
-var test_pair: string = "xadjdg"//"yaedgd" or %xamjmg%yagdjd
-var test_arch: string = "xAdgde%tAfmkm%bAfdkd%yAmjml" //%xadldj%yagmim
-var single_arch: string = "xAdkdf"
-var single_arch_bottom: string = "tAfmkm"
-var hyper_original: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAemlm%bAedld" //weird 
-var test_double_arch: string = "xAdgde%xAdjdl"
+// FENS
+const base_game_FEN: string = "FEN:rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+const toriodal_chess_FEN: string = "HFEN:16/16/16/4pppppppp4/4rnbqkbnr4/4pppppppp4/8/8/8/8/4PPPPPPPP4/4RNBQKBNR4/4PPPPPPPP4"
+const rook_test_FEN: string = "r3k/8/8/8/4p/8/5P/2R";
+const los_alamos_FEN: string = "FEN:rnqknr/pppppp/6/6/PPPPPP/RNQKNR"
+
+// BOARDS
+const test_line: string = "xLdhmh%yLgdgm"
+const test_pair: string = "xadjdg%yhgdgm"//"yaedgd" or %xamjmg%yagdjd
+const test_arch: string = "xAdgde%tAfmkm%bAfdkd%yAmjml" //%xadldj%yagmim
+const single_arch: string = "xAdkdf"
+const single_arch_bottom: string = "tAfmkm"
+const hyper_original: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAemlm%bAedld" //weird 
+const hyper_better: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAfmkm%bAfdkd%xLdimi%xLdhmh"
+const test_double_arch: string = "xAdgde%xAdjdl"
 //var hyper_original: string = "xAdldj%xAdgde%yAmlmj%yAmgme%tAemlm%bAedld"
-var cylindrical_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml"
-var toroidal_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom%xLdbmb%xLdcmc%xLddmd%xLdmmm%xLdnmn%xLdomo"//"xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom"
-var rook_test: string = "r3k/8/8/8/4p/8/5P/2R";
-var string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
+const cylindrical_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml"
+const toroidal_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom%xLdbmb%xLdcmc%xLddmd%xLdmmm%xLdnmn%xLdomo"//"xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom"
+
+const string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
 type Move = Square;
 
@@ -105,13 +112,35 @@ export class Game {
     }
 
     gen_from_fen(fen_str: string) {
+        const split: Array<string> = fen_str.split(':')
+        const type: string = split[0]
+        const fen: string = split[1]
+        if (type == "FEN") {
+            this.gen_from_normal_fen(fen)
+        }
+        else if (type == "HFEN") {
+            this.gen_from_hfen(fen)
+        }
+        else {
+            throw new Error("FEN string format invalid, must have 1 of FEN: or HFEN: identifier!")
+        }
+    }
+
+    gen_from_normal_fen(fen_str: string) {
         let x: number = this.board.base_board_inds[0];
         let y: number = this.board.base_board_inds[3];
         this.gen_from_generic_fen(fen_str, x, y)
     }
 
-    gen_from_generic_fen(fen_str: string, x: number, y: number): void {
-        
+    gen_from_hfen(hyper_fen_str: string) {
+        let x: number = 0
+        let y: number = WHOLE_BOARD_HEIGHT - 1
+        this.gen_from_generic_fen(hyper_fen_str, x, y)
+    }
+
+    gen_from_generic_fen(fen_str: string, x0: number, y0: number): void {
+        let x: number = x0
+        let y: number = y0
         for (let piece_str of fen_str) {
             let lower_case_str: string = piece_str.toLowerCase();
             let color: Color = "white";
@@ -121,7 +150,7 @@ export class Game {
     
             if (piece_str == "/") {
                 y -= 1;
-                x = this.board.base_board_inds[0];
+                x = x0;
             }
             else if (['r', 'p', 'q', 'b', 'k', 'n'].includes(lower_case_str)) {
                 const piece_type = string_to_piece[lower_case_str];
@@ -199,7 +228,6 @@ export class Game {
             const current_point: Point = label_to_point(current_sq_label);
             const current_sq: Square = this.board.get_sq(current_point)
             if (piece.move_continuous == true) {
-                //valid_moves = this.raycast(piece, current_sq, mv, valid_moves);
                 const current_mv_moves: Array<Square> = this.raycast(piece, current_sq, mv, []);
                 valid_moves = valid_moves.concat(current_mv_moves)
             }
@@ -246,16 +274,16 @@ export class Game {
         // Moves
         if (this.check_if_sq_empty(s1, piece)){
             valid_moves.push(s1)
-        }
+        } // double move
         if (piece.unmoved && this.check_if_sq_empty(s1, piece) && this.check_if_sq_empty(s2, piece)) {
             valid_moves.push(s2)
-        }
+        } // en passant
         if ([atk1, atk2].includes(this.enpassant_sq)) {
             valid_moves.push(this.enpassant_sq)
-        }
+        } // first attack
         if (this.check_if_square_takeable(atk1, piece.color) && !(this.check_if_sq_empty(atk1, piece))) {
             valid_moves.push(atk1)
-        }
+        } // second attack
         if (this.check_if_square_takeable(atk2, piece.color) && !(this.check_if_sq_empty(atk2, piece))) {
             valid_moves.push(atk2)
         }
@@ -270,11 +298,7 @@ export class Game {
                 const ly: number = link_point.y;
                 const link_sq = this.board[ly][lx] as Hyper;
                 if (!(link_sq instanceof Link) && !(valid_moves.includes(link_sq))) {
-                    //console.log(mv)
                     mv = link_sq.invert(mv);
-                    //console.log("inverting!")
-                    //console.log(link_sq, mv)
-                    //this.hyper_tracker = true;
                     valid_moves = this.raycast(piece, link_sq, mv, valid_moves);
                 }
                 else if (!valid_moves.includes(link_sq)) {
@@ -378,4 +402,6 @@ export class Game {
     }
 }
 
-export var g = new Game(8, 8, toroidal_chess, base_game_FEN);
+//export var g = new Game(8, 8, toroidal_chess, toriodal_chess_fen);
+//export var g = new Game(8, 8, hyper_original, base_game_FEN);
+export var g = new Game(6, 6, "", los_alamos_FEN);

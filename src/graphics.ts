@@ -3,10 +3,13 @@ import { NORM_BOARD_HEIGHT, NORM_BOARD_WIDTH, LoopDesc } from './board'
 import { WHOLE_BOARD_WIDTH, WHOLE_BOARD_HEIGHT, Square, Color, label_to_point, Point, Label, Forbidden, Align } from './squares'
 import { Piece } from './pieces'
 
-type Pixel = number
+type Pixel = number;
 
-const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1, 1, 0], "y": [0, 1, 1, 0]}
-const ALIGN_TO_OFFSET = {"t":[1, 0], "b": [1, 2], "x": [2, 1], "y": [0, 1]}
+const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1, 1, 0], "y": [0, 1, 1, 0]};
+const ALIGN_TO_OFFSET = {"t":[1, 0], "b": [1, 2], "x": [2, 1], "y": [0, 1]};
+
+let arch_pair_count: number = 1;
+let line_pair_count: number = 1;
 
 const classic = {"bg": "#ebe5c0", "black": "#cab175", "white": "#e9daB5", 
                 "black_active": "#bf8558", "white_active": "#e69f6a", "active": "#84a360", 
@@ -36,11 +39,13 @@ class Visual_Square {
     midpoint: Array<number>;
     type: string;
     bbox: Array<Array<number>>;
-    constructor(real_square, points, midpoint, type) {
+    label: string;
+    constructor(real_square, points, midpoint, type, label="") {
         this.real_sq = real_square;
         this.points = points;
         this.midpoint = midpoint;
         this.type = type; //or curved
+        this.label = label;
         let x = points.map(p => p[0]);
         let y = points.map(p => p[1]);
         if (points.length > 2) {
@@ -57,6 +62,7 @@ class Visual_Square {
     }
 
     draw(mode: string="default"): void {
+        
         let fill_colour: string = colours[this.real_sq.color]    
         if (mode == "active"){
             fill_colour = colours[this.real_sq.color + "_active"]
@@ -71,7 +77,11 @@ class Visual_Square {
         }
         ctx.closePath()
         ctx.fill()
-        this.draw_text()
+
+        if (this.type == "pair") {
+            this.draw_label()
+        }
+        //this.draw_text()
     }
 
     calc_centre_pads(obj_w: Pixel, obj_h: Pixel): Array<Pixel> {
@@ -105,11 +115,22 @@ class Visual_Square {
 
     }
 
+    draw_label(): void {
+        let real_x: Pixel = this.midpoint[0];
+        let real_y: Pixel = this.midpoint[1];
+        ctx.fillStyle = (this.real_sq.color == "white") ? colours["black"] : colours["white"];
+        const large_font_size: Pixel = 3 * (SQ_W / 5)
+        ctx.font = String(large_font_size) + 'px arial';
+        ctx.fillText(this.label[0], real_x-large_font_size/4, real_y+large_font_size/4);
+        const small_font_size: Pixel = 1.5 * (SQ_W / 5)
+        ctx.font = String(small_font_size) + 'px arial';
+        ctx.fillText(this.label[1], real_x+large_font_size/3, real_y+large_font_size/2, SQ_W);
+    }
+
     draw_text(): void {
-        //let pads: Array<Pixel>  = this.calc_centre_pads(SQ_W, SQ_W)
-        let real_x: Pixel = this.midpoint[0] 
-        let real_y: Pixel = this.midpoint[1] 
-        ctx.fillStyle = "black"
+        let real_x: Pixel = this.midpoint[0];
+        let real_y: Pixel = this.midpoint[1];
+        ctx.fillStyle = "black";
         
         ctx.fillText(this.real_sq.label, real_x, real_y);
     }
@@ -148,11 +169,7 @@ function fill_canvas_norm(graphics_board: VisualBoard): VisualBoard{
     const [lx, by, rx, ty]: Array<number> = g.board.base_board_inds;
     for (let iy=by; iy<ty+1; iy++){
         for (let ix=lx; ix<rx+1; ix++){
-            let blx: Pixel = x_offset_px + ix * SQ_W
-            let bly: Pixel = y_offset_px + iy * SQ_W 
-            let points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
-            const midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
-            graphics_board[iy][ix] = new Visual_Square(g.board[iy][ix], points, midpoint, "square")
+            add_square(g.board[iy][ix].point)
         }
     }
     return graphics_board
@@ -237,7 +254,7 @@ function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_l
     // Compute midpoint
     const len: number = angles.length-1;
     
-    for(let angle of angles){
+    for (let angle of angles){
         let orient = ALIGN_TO_ORIENT[align]
         const mid_angle: number = angle[0] + (angle[angle.length-1] - angle[0])/2;
         const mid_rad: number = mid_angle * Math.PI / 180;
@@ -253,12 +270,11 @@ function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_l
             let y: number = orient[2] * Math.cos(rad) + orient[3] * Math.sin(rad)
             y *= flip
 
-
             let x1: number = ax + r1 * x * SQ_W;
             let y1: number = ay + r1 * y * SQ_W;
             let x2: number = ax + r2 * x * SQ_W;
             let y2: number = ay + r2 * y * SQ_W;
-            //console.log(rad)
+
             r1_points.push([x1, y1]);
             r2_points.push([x2, y2]);
         }
@@ -299,20 +315,30 @@ function point_to_pixel(point: Point): Array<Pixel> {
     return [x_offset_px + point.x * SQ_W,  y_offset_px + point.y * SQ_W]
 }
 
-function add_square(point: Point, bbox: Array<Pixel>=[]): void {
-    let points: Array<Array<Pixel>>
+function add_square(point: Point, bbox: Array<Pixel>=[], points: Array<Array<Pixel>>=[], label: string=""): void {
+    //let points: Array<Array<Pixel>>
     let midpoint: Array<Pixel>
-    let blx: Pixel, bly: Pixel, urx: Pixel, ury: Pixel
-    if (bbox.length == 0) {
+    let blx: Pixel, bly: Pixel, urx: Pixel, ury: Pixel, midx: Pixel, midy: Pixel
+    
+    if (points.length > 0) {
         [blx, bly] = point_to_pixel(point)
-        points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
     }
-    else {
+    else if (bbox.length > 0) {
         [blx, bly, urx, ury] = bbox
         points = [[blx, bly], [urx, bly], [urx, ury], [blx, ury]]
     }
+    else {
+        [blx, bly] = point_to_pixel(point)
+        points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
+    }
     midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
-    visual_board[point.y][point.x] = new Visual_Square(g.board[point.y][point.x], points, midpoint, "square")
+    if (label == "") {
+        visual_board[point.y][point.x] = new Visual_Square(g.board[point.y][point.x], points, midpoint, "square")
+    }
+    else {
+        visual_board[point.y][point.x] = new Visual_Square(g.board[point.y][point.x], points, midpoint, "pair", label)
+    }
+    
 }
 
 function add_squares(loop_points: Array<Point>): void {
@@ -326,19 +352,38 @@ function add_line_squares(loop_desc: LoopDesc): void {
     let [rx, ry]: Array<Pixel> = point_to_pixel(rhs_p)
     const lhs_p: Point = loop_desc[3][loop_desc[3].length - 1]
     let [lx, ly]: Array<Pixel> = point_to_pixel(lhs_p)
-    let l_bbox: Array<Pixel>, r_bbox: Array<Pixel>
+    let l_points: Array<Array<Pixel>>, r_points: Array<Array<Pixel>>
     if (loop_desc[0] == 'y') {
-        r_bbox = [rx, 0, rx+SQ_W, ry+SQ_W]
-        l_bbox = [lx, ly, lx+SQ_W, canvas_h]
+        r_points = [[rx, ry], [rx+SQ_W/2, ry-SQ_W], [rx+SQ_W, ry], [rx+SQ_W, ry+SQ_W], [rx, ry+SQ_W]]
+        l_points = [[lx, ly], [lx+SQ_W, ly], [lx+SQ_W, ly+SQ_W], [lx+SQ_W/2, ly+2*SQ_W], [lx, ly+SQ_W]]
     }
     else {
-        r_bbox = [0, ry, rx+SQ_W, ry+SQ_W]
-        l_bbox = [lx, ly, lx+rx+SQ_W, ly+SQ_W]
+        r_points = [[rx-SQ_W, ry+SQ_W/2], [rx, ry], [rx+SQ_W, ry],  [rx+SQ_W, ry+SQ_W], [rx, ry+SQ_W]]
+        l_points = [[lx, ly], [lx+SQ_W, ly], [lx+2*SQ_W, ly+SQ_W/2], [lx+SQ_W, ly+SQ_W], [lx, ly+SQ_W]]
+
     }
-    add_square(rhs_p, r_bbox)
-    add_square(lhs_p, l_bbox)
+    add_square(rhs_p, [], r_points)
+    add_square(lhs_p, [], l_points)
     const rest_of_points: Array<Point> = loop_desc[3].slice(1, -1)
     add_squares(rest_of_points)
+}
+
+function add_pair(loop_desc: LoopDesc): void {
+    const label_str: string = loop_desc[2]
+    let num: number
+    if (loop_desc[2] == 'a') {
+        num = arch_pair_count
+        arch_pair_count += 1
+    }
+    else {
+        num = line_pair_count
+        line_pair_count += 1
+    }
+    const label: string = label_str + String(num)
+    const points: Array<Point> = loop_desc[3]
+    add_square(points[0], [], [], label)
+    add_square(points[1], [], [], label)
+
 }
 
 
@@ -350,13 +395,15 @@ window.onload = function() {
     visual_board = fill_canvas_bg()
     visual_board = fill_canvas_norm(visual_board)
     for (let l of g.board.loops){
-        if (l[2] == 'a') {
+        if (l[2] == 'a' && l[1] == "loop") {
             add_loop_squares(l)
         }
-        else if (l[2] == 'l') {
+        else if (l[2] == 'l' && l[1] == "loop") {
             add_line_squares(l)
         }
-
+        else if (l[1] == "pair") {
+            add_pair(l)
+        }
         else {
             add_squares(l[3])
         }
