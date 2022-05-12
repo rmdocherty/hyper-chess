@@ -11,24 +11,8 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
     npx webpack serve
 */
 
-// FENS
+// FEN
 const base_game_FEN: string = "FEN:rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-const toriodal_chess_FEN: string = "HFEN:16/16/16/4pppppppp4/4rnbqkbnr4/4pppppppp4/8/8/8/8/4PPPPPPPP4/4RNBQKBNR4/4PPPPPPPP4"
-const rook_test_FEN: string = "r3k/8/8/8/4p/8/5P/2R";
-const los_alamos_FEN: string = "FEN:rnqknr/pppppp/6/6/PPPPPP/RNQKNR"
-
-// BOARDS
-const test_line: string = "xLdhmh%yLgdgm"
-const test_pair: string = "xadjdg%yhgdgm"//"yaedgd" or %xamjmg%yagdjd
-const test_arch: string = "xAdgde%tAfmkm%bAfdkd%yAmjml" //%xadldj%yagmim
-const single_arch: string = "xAdkdf"
-const single_arch_bottom: string = "tAfmkm"
-const hyper_original: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAemlm%bAedld" //weird 
-const hyper_better: string = "xAdgde%xAdjdl%yAmjml%yAmgme%tAfmkm%bAfdkd%xLdimi%xLdhmh"
-const test_double_arch: string = "xAdgde%xAdjdl"
-//var hyper_original: string = "xAdldj%xAdgde%yAmlmj%yAmgme%tAemlm%bAedld"
-const cylindrical_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml"
-const toroidal_chess: string = "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom%xLdbmb%xLdcmc%xLddmd%xLdmmm%xLdnmn%xLdomo"//"xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom"
 
 const string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
@@ -112,9 +96,16 @@ export class Game {
     }
 
     gen_from_fen(fen_str: string) {
-        const split: Array<string> = fen_str.split(':')
-        const type: string = split[0]
-        const fen: string = split[1]
+        let fen: string;
+        let type: string
+        if (fen_str == "") {
+            [type, fen] = base_game_FEN.split(':')
+        }
+        else {
+            [type, fen] = fen_str.split(':')
+        }
+
+        
         if (type == "FEN") {
             this.gen_from_normal_fen(fen)
         }
@@ -401,7 +392,3 @@ export class Game {
         }
     }
 }
-
-//export var g = new Game(8, 8, toroidal_chess, toriodal_chess_fen);
-//export var g = new Game(8, 8, hyper_original, base_game_FEN);
-export var g = new Game(6, 6, "", los_alamos_FEN);

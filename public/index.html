@@ -2,8 +2,28 @@
 <html>
 <body>
 
+<script>
+function gameSelect(){
+    const game = document.getElementById("game_select").value
+    localStorage.setItem("selected_game", game)
+    console.log(game)
+}
+</script>
+
 <h1>HYPERCHESS</h1>
+
+<select onchange="gameSelect()" id="game_select">
+    <option value="hyper">HYPER</option>
+    <option value="normal">Normal</option>
+    <option value="cylindrical">Cylindrical</option>
+    <option value="toroidal">Toroidal</option>
+    <option value="los_alamos">Los Alamos</option>
+    <option value="mobius">Mobius</option>
+    <option value="test_pair">Test Pair</option>
+</select>
+
 <a href="game.html">Play!</a>
+
 
 </body>
 </html>

@@ -1,9 +1,22 @@
-import { g } from './game'
+import { Game } from './game'
 import { NORM_BOARD_HEIGHT, NORM_BOARD_WIDTH, LoopDesc } from './board'
 import { WHOLE_BOARD_WIDTH, WHOLE_BOARD_HEIGHT, Square, Color, label_to_point, Point, Label, Forbidden, Align } from './squares'
 import { Piece } from './pieces'
 
+
 type Pixel = number;
+
+const JSON_data: string = require("./games.json")
+let g: Game;
+function load_game_from_local_storage(){
+    const selected_game: string = localStorage.getItem("selected_game")
+    const game = JSON_data[selected_game]
+    const h: number = parseInt(game['h']), w: number = parseInt(game['w'])
+    const board_str: string = game['board_str']
+    const FEN: string = game['FEN']
+    g = new Game(w, h, board_str, FEN)
+}
+load_game_from_local_storage()
 
 const ALIGN_TO_ORIENT = {"t": [-1, 0, 0, 1], "b": [-1, 0, 0, -1], "x": [0, -1, 1, 0], "y": [0, 1, 1, 0]};
 const ALIGN_TO_OFFSET = {"t":[1, 0], "b": [1, 2], "x": [2, 1], "y": [0, 1]};
@@ -95,16 +108,23 @@ class Visual_Square {
         return out
     }
 
-    draw_sprite(sprite_addr): void {
+    draw_sprite(sprite_addr, points: Array<Pixel>=[]): void {
         const pads: Array<Pixel> = this.calc_centre_pads(SQ_W, SQ_W)
-        const real_x: Pixel = this.midpoint[0] - SQ_W / 2
-        const real_y: Pixel = this.midpoint[1] - SQ_W / 2
-        ctx.drawImage(sprite_addr, 0, 0, 60, 60, real_x, real_y, SQ_W, SQ_W)
+        let x: Pixel, y: Pixel
+        if (points.length > 0) {
+            [x, y] = points
+        }
+        else {
+            [x, y] = [this.midpoint[0]-SQ_W/2, this.midpoint[1]-SQ_W/2]
+        }
+        //const real_x: Pixel = x - SQ_W / 2
+        //const real_y: Pixel = y - SQ_W / 2
+        ctx.drawImage(sprite_addr, 0, 0, 60, 60, x, y, SQ_W, SQ_W)
     }
 
     draw_circle(): void {
         let pads: Array<Pixel>  = this.calc_centre_pads(SQ_W, SQ_W)
-        let real_x: Pixel = this.midpoint[0], real_y =this.midpoint[1]
+        let real_x: Pixel = this.midpoint[0], real_y: Pixel =this.midpoint[1]
         ctx.fillStyle = colours["circle"]
         ctx.beginPath();
         ctx.arc(real_x, real_y, SQ_W / 10, 0, 2 * Math.PI);
@@ -146,6 +166,9 @@ class Visual_Square_Forbidden extends Visual_Square {
         return 0;
     }
 }
+
+
+
 
 
 type VisualBoard = Array<Array<Visual_Square>>
@@ -190,7 +213,7 @@ function draw_board(graphics_board: VisualBoard): void{
 function draw_vector(vector: Array<Square>, graphics_board: VisualBoard, mode:string="default"): void {
 
     for (let sq of vector) {
-        let x = sq.point.x, y= sq.point.y
+        let x: number = sq.point.x, y: number = sq.point.y
         let gfx_sq: Visual_Square = graphics_board[y][x]
 
         /*
@@ -222,7 +245,7 @@ function draw_pieces(graphics_board, LabelPieceMap): void{
 
 function get_angles(loop: Array<Point>, angle: number=180): Array<Array<number>> {
     let d_theta: number = angle / loop.length
-    let total_angles: number = 250;
+    let total_angles: number = 200;
     let all_angles: Array<Array<number>> = [];
 
     for (let i = 0; i < loop.length; i++) {
@@ -235,7 +258,7 @@ function get_angles(loop: Array<Point>, angle: number=180): Array<Array<number>>
     return all_angles;
 }
 
-function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_loc: Array<number>, align: Align): any { //Array<Array<Point>, Array<number>>
+function get_coords(angles: Array<Array<number>>, radii: Array<number>, anchor_loc: Array<number>, align: Align): any {
     const [r1, r2] = radii;
     const [ax, ay] = anchor_loc;
     
@@ -383,15 +406,70 @@ function add_pair(loop_desc: LoopDesc): void {
     const points: Array<Point> = loop_desc[3]
     add_square(points[0], [], [], label)
     add_square(points[1], [], [], label)
+}
 
+function gen_points_between_squares(v_sq1: Visual_Square, v_sq2: Visual_Square, N: number=100): Array<Array<Pixel>> {
+    let points: Array<Array<Pixel>> = []
+    // Draw straight line between midpoints
+    const x0: Pixel = v_sq1.midpoint[0], y0: Pixel = v_sq1.midpoint[1]
+    const dx: number = v_sq2.real_sq.point.x - v_sq1.real_sq.point.x
+    const dy: number = v_sq2.real_sq.point.y - v_sq1.real_sq.point.y
+    const magnitude: number = Math.sqrt(Math.pow(dx, 2) +  Math.pow(dy, 2))
+
+    if (magnitude > 4) { // large jump (i.e across the board)
+        const x1: Pixel = v_sq2.midpoint[0], y1: Pixel = v_sq2.midpoint[1]
+        points = [[x0, y0], [x1, y1]]
+    }
+    else { //else smooth increase across line connecting midpoints
+        const epsilon: number = 1/N
+        for (let i=0; i<N; i++){
+            const point: Array<Pixel> = [(x0+epsilon*i*dx)-SQ_W/2, (y0+epsilon*i*dy)-SQ_W/2]
+            points.push(point)
+        }
+    }
+    return points
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function animate_between_squares(initial_v_sq: Visual_Square, moved_piece: Piece, points: Array<Array<Pixel>>) {
+    console.log(moved_piece)
+    for (let s of points) {
+        
+        sleep(50).then(() => {
+            initial_v_sq.draw_sprite(moved_piece.img, s)
+            ctx.clearRect(s[0], s[1], SQ_W, SQ_W)
+            draw_vector(currently_highlighted, visual_board, "default")
+        })
+        
+    }
+}
+
+function animate(vector: Array<Square>, visual_board: VisualBoard, piece: Piece): void {
+    const initial_sq: Square = vector[0]
+    const initial_v_sq: Visual_Square = visual_board[initial_sq.point.y][initial_sq.point.x]
+    // Animate by repeatedly calling draw sprite method of init square with new coords
+    for (let i=1; i<vector.length; i++){
+        const sq: Square = vector[i]
+        const v_sq: Visual_Square = visual_board[sq.point.y][sq.point.x]
+
+        const prev_sq: Square = vector[i-1]
+        const prev_v_sq: Visual_Square = visual_board[prev_sq.point.y][prev_sq.point.x]
+
+        const temp_points: Array<Array<Pixel>> = gen_points_between_squares(v_sq, prev_v_sq)
+        //animate_between_squares(initial_v_sq, piece, temp_points)
+    }
 }
 
 
 
 var visual_board: VisualBoard = []
-var currently_highlighted = []
+var currently_highlighted: Array<Square> = []
 
 window.onload = function() {
+    
     visual_board = fill_canvas_bg()
     visual_board = fill_canvas_norm(visual_board)
     for (let l of g.board.loops){
@@ -444,8 +522,10 @@ function check_click(x: Pixel, y: Pixel, visual_board: VisualBoard): void{
                 }
                 else if (is_move) {
                     // TAKE A PIECE
+                    const piece: Piece = g.LabelPiece.get(currently_highlighted[0].label) as Piece
                     g.make_move(currently_highlighted[0], v_sq.real_sq)
                     draw_vector(currently_highlighted, visual_board, "default")
+                    animate(currently_highlighted, visual_board, piece)
                     currently_highlighted = []
                 }
             }
@@ -453,7 +533,6 @@ function check_click(x: Pixel, y: Pixel, visual_board: VisualBoard): void{
             
             if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed
                 draw_board(visual_board)
-                
                 draw_pieces(visual_board, g.LabelPiece)
                 g.global_update = false
             }
