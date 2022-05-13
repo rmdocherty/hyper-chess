@@ -1,6 +1,76 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <title>Hyperchess</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.png">
+</head>
+
 <body>
+
+
+<h1>HYPERCHESS</h1>
+
+<button id="playButton" onclick="showPlayModal()" class="mainButtons">PLAY</button><button class="mainButtons">BUILD</button>
+
+
+<div id="playModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        Variant:
+        <select onchange="gameSelect()" id="game_select">
+            <option value="hyper">HYPER</option>
+            <option value="normal">Normal</option>
+            <option value="cylindrical">Cylindrical</option>
+            <option value="toroidal">Toroidal</option>
+            <option value="los_alamos">Los Alamos</option>
+            <option value="mobius">Mobius</option>
+            <option value="test_pair">Test Pair</option>
+        </select>
+        &nbsp&nbsp Time (minutes):
+        <select>
+            <option value="0">None</option>
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+        </select>
+        &nbsp&nbsp Increment (seconds):
+        <select>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="30">30</option>
+        </select>
+
+        <p></p>
+        <a href="game.html">Over-The-Board</a>
+        <p></p>
+        <a href="game.html">Play with a friend</a>
+        <p></p>
+        Join a friend: <input type="text" id="friendID"><button>➢</button> 
+
+    </div>
+</div>
+
+
+<h2>About:</h2>
+<p class="frontPageText">
+    Hyperchess is a platform for creating and playing non-Euclidean chess games. 
+    In this context, non-Euclidean refers to loops connecting same sides of a board or lines connecting
+    opposite sides of the board. Users are encouraged to create their own boards via the 'BUILD' button and to play with friends 
+    over a peer-to-peer connection with the 'PLAY' button.
+</p>
+
+
+<h2>Rules:</h2>
+
+<ul class="frontPageText">
+    <li>No checks - take the King to win</li>
+    <li>Auto-promote to Queen only</li>
+    <li>Everything else (castling, <i>en passant</i>) as in regular chess</li>
+</ul>
 
 <script>
 function gameSelect(){
@@ -8,22 +78,25 @@ function gameSelect(){
     localStorage.setItem("selected_game", game)
     console.log(game)
 }
+
+let modal = document.getElementById("playModal");
+let btn = document.getElementById("playButton");
+let span = document.getElementsByClassName("close")[0];
+
+function showPlayModal() {
+    modal.style.display = "block";
+}
+
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
 </script>
-
-<h1>HYPERCHESS</h1>
-
-<select onchange="gameSelect()" id="game_select">
-    <option value="hyper">HYPER</option>
-    <option value="normal">Normal</option>
-    <option value="cylindrical">Cylindrical</option>
-    <option value="toroidal">Toroidal</option>
-    <option value="los_alamos">Los Alamos</option>
-    <option value="mobius">Mobius</option>
-    <option value="test_pair">Test Pair</option>
-</select>
-
-<a href="game.html">Play!</a>
-
 
 </body>
 </html>

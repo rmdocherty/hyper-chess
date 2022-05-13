@@ -301,6 +301,7 @@ export class Game {
     }
 
     raycast(piece: Piece, start_sq: Square, mv: Vector, valid_moves: Array<Move>): Array<Move> {
+        // Can I use a web worker for this bit? Might speed stuff up?
         let current_sq: Square = start_sq;
         let quit: boolean = false;
         while (quit == false) {
