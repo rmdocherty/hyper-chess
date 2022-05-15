@@ -2,7 +2,7 @@ import { Game } from './game'
 import { NORM_BOARD_HEIGHT, NORM_BOARD_WIDTH, LoopDesc } from './board'
 import { WHOLE_BOARD_WIDTH, WHOLE_BOARD_HEIGHT, Square, Color, label_to_point, Point, Label, Forbidden, Align } from './squares'
 import { Piece } from './pieces'
-//import * as pr from './peerJS.js'
+import { peerjs } from './peerJS.js'
 
 
 type Pixel = number;
@@ -470,6 +470,8 @@ var visual_board: VisualBoard = []
 var currently_highlighted: Array<Square> = []
 
 window.onload = function() {
+    //const p = new peerjs.Peer()
+    //console.log(p)
     visual_board = fill_canvas_bg()
     visual_board = fill_canvas_norm(visual_board)
     for (let l of g.board.loops){
