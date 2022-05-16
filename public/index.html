@@ -45,11 +45,11 @@
         </select>
 
         <p></p>
-        <a href="game.html">Over-The-Board</a>
+        <a href="game.html?single">Over-The-Board</a>
         <p></p>
-        <a href="game.html">Play with a friend</a>
+        <a href="game.html?host">Play with a friend</a>
         <p></p>
-        Join a friend: <input type="text" id="friendID"><button>➢</button> 
+        Join a friend: <input type="text" id="friendID"><button onclick="joinGame()">➢</button> 
 
     </div>
 </div>
@@ -95,6 +95,11 @@ window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";
     }
+}
+
+function joinGame(){
+    const friendID = document.getElementById("friendID").value
+    window.location.href = "game.html?guest?"+friendID
 }
 </script>
 

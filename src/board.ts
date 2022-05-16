@@ -41,29 +41,38 @@ export class Board extends Array {
     }
 
     //========FILLS========
+
+    background_obj(x: number, y:number): any {
+        const p: Point = new Point(x, y);
+        const current_sq: Forbidden = new Forbidden(p);
+        return current_sq
+    }
     
     fill_background(): void {
         //Fill board with forbidden squares to start
         for (let y=0; y<WHOLE_BOARD_HEIGHT; y++){
             let row = [];
             for (let x=0; x<WHOLE_BOARD_WIDTH; x++){
-                const p: Point = new Point(x, y);
-                const current_sq: Forbidden = new Forbidden(p);
+                const current_sq: any = this.background_obj(x, y);
                 row.push(current_sq);
             }
             this.push(row);
         }
     }
 
-    fill_base_board(): void {
+    add_square(x: number, y: number): void {
+        const p: Point = new Point(x, y);
+        const current_sq: Square = new Square(p);
+        this[y][x] = current_sq;
+    }
+
+    fill_base_board(base_board_indices: Array<number>): void {
         //Fill the middle of the board with normal squares that correspond to bw x bh rectangle
-        const [lx, by, rx, ty]: Array<number> = this.base_board_inds;
+        const [lx, by, rx, ty]: Array<number> = base_board_indices; //this.base_board_inds
         // Need the +1s here to avoid undercounting by 1
         for (let y=by; y<ty+1; y++){
             for (let x=lx; x<rx+1; x++){
-                const p: Point = new Point(x, y);
-                const current_sq: Square = new Square(p);
-                this[y][x] = current_sq;
+                this.add_square(x, y)
             }
         }
     }
@@ -187,7 +196,7 @@ export class Board extends Array {
 
     make_board(loop_string: string): void {
         this.fill_background();
-        this.fill_base_board();
+        this.fill_base_board(this.base_board_inds);
         if (loop_string.length > 0){
             this.make_loop(loop_string);
         }

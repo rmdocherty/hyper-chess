@@ -242,10 +242,10 @@ export class Game {
             const sqs: Array<Square> = this.raycast(piece, start_sq, m, [])
             const last_sq: Square = sqs[sqs.length-1]
             
-            const next_sq: Square = this.board[last_sq.point.y][last_sq.point.x + m.x]
+            const next_sq: Square = this.board[last_sq.y][last_sq.x + m.x]
             const next_piece: any = this.LabelPiece.get(next_sq.label)
             if ((next_piece instanceof Rook) && (next_piece.color == piece.color) && (next_piece.unmoved == true)) {
-                const king_move_sq: Square = this.board[start_sq.point.y][start_sq.point.x + 2*m.x]
+                const king_move_sq: Square = this.board[start_sq.y][start_sq.x + 2*m.x]
                 valid_moves.push(king_move_sq)
             }
         }
@@ -258,10 +258,10 @@ export class Game {
         const p: Point = label_to_point(current_label)
         const mv: Vector = piece.move_vectors[0]
         const [av1, av2] = piece.attack_vectors
-        const s1: Square = this.board[p.y+mv.y][p.x]
-        const s2: Square = this.board[p.y+2*mv.y][p.x]
-        const atk1: Square = this.board[p.y+av1.y][p.x+av1.x]
-        const atk2: Square = this.board[p.y+av2.y][p.x+av2.x]
+        const s1: Square = this.board[p.y + mv.y][p.x]
+        const s2: Square = this.board[p.y + 2*mv.y][p.x]
+        const atk1: Square = this.board[p.y + av1.y][p.x + av1.x]
+        const atk2: Square = this.board[p.y + av2.y][p.x + av2.x]
         // Moves
         if (this.check_if_sq_empty(s1, piece)){
             valid_moves.push(s1)
@@ -354,7 +354,7 @@ export class Game {
             piece.unmoved = false
         } // ENPASASNT
         else if ((piece instanceof Pawn) && (new_sq == this.enpassant_sq)){
-            const enp_victim: Square = this.board[this.enpassant_sq.point.y - piece.direction][this.enpassant_sq.point.x]
+            const enp_victim: Square = this.board[this.enpassant_sq.y - piece.direction][this.enpassant_sq.x]
             this.LabelPiece.delete(enp_victim.label)
             piece.unmoved = false
             this.global_update = true

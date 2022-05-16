@@ -55,12 +55,16 @@ export class Square {
     point: Point;
     color: Color;
     label: Label;
+    x: number;
+    y: number;
     constructor(point: Point){
         this.point = point;
         this.color = ((point.x + point.y) % 2 == 0) ? "black" : "white";
         if (point.x > WHOLE_BOARD_WIDTH || point.x < 0 || point.y > WHOLE_BOARD_HEIGHT || point.y < 0) {
             throw new RangeError("Must initialise square inside the allowed (16x16) range!");
         }
+        this.x = point.x
+        this.y = point.y
         this.label = alphabet[point.x] + alphabet[point.y];
     }
 }
