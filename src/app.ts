@@ -16,11 +16,19 @@ function join(id: string): void{
     }
     conn = peer.connect(id)
     conn.on('data', function(data) {
-        console.log(data);
+        
         if (app_type == "guest" && typeof data === 'object') {
             app.load_from_game(app.load_game_from_JSON(data))
             app.vboard.reset_board()
             app.draw()
+        }
+        else if (typeof data === 'string' && data.length == 4) {
+            const old_label: string = data[0] + data[1]
+            const new_label: string = data[2] + data[3]
+            console.log(old_label, new_label)
+            app.game.make_move_by_label(old_label, new_label)
+            app.vboard.draw_board()
+            app.vboard.draw_pieces(app.game.LabelPiece)
         }
     });
     conn.on('open', function() {
@@ -90,6 +98,8 @@ class App {
         peer = new peerjs.Peer()
         const url_split: Array<string> = window.location.href.split('?')
         const type: AppType = url_split[1] as AppType
+        const vboard = this.vboard
+        const game = this.game
         peer.on('open', function(id) {
             if (type == "host"){
                 const url: string = url_split[0]
@@ -104,7 +114,12 @@ class App {
             if (type == "host") {
                 conn = dataConnection//join(dataConnection.peer)
                 conn.on('data', function(data) {
-                    console.log(data);
+                    const old_label: string = data[0] + data[1]
+                    const new_label: string = data[2] + data[3]
+                    console.log(old_label, new_label)
+                    game.make_move_by_label(old_label, new_label)
+                    vboard.draw_board()
+                    vboard.draw_pieces(game.LabelPiece)
                 });
                 console.log('Connected to ', conn.peer);
                 conn.on('open', function() {
@@ -144,9 +159,11 @@ class App {
                     }
                     else if (is_move) {
                         // TAKE A PIECE
-                        const piece: Piece = g.LabelPiece.get(vboard.current_vec[0].label) as Piece
+                        const start_sq_label: string = vboard.current_vec[0].label
+                        const end_sq_label: string = v_sq.real_sq.label
+                        const piece: Piece = g.LabelPiece.get(start_sq_label) as Piece
                         g.make_move(vboard.current_vec[0], v_sq.real_sq)
-                        //conn.send("making move")
+                        conn.send(start_sq_label+end_sq_label)
                         vboard.draw_vector(vboard.current_vec, "default")
                         vboard.current_vec = []
                     }

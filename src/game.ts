@@ -105,7 +105,6 @@ export class Game {
             [type, fen] = fen_str.split(':')
         }
 
-        
         if (type == "FEN") {
             this.gen_from_normal_fen(fen)
         }
@@ -331,6 +330,14 @@ export class Game {
             }
         }
         return valid_moves;
+    }
+
+    make_move_by_label(old_sq_label: string, new_sq_label: string) {
+        const old_p: Point = label_to_point(old_sq_label)
+        const new_p: Point = label_to_point(new_sq_label)
+        const old_sq: Square = this.board[old_p.y][old_p.x]
+        const new_sq: Square = this.board[new_p.y][new_p.x]
+        this.make_move(old_sq, new_sq)
     }
 
     make_move(old_sq: Square, new_sq: Square) {
