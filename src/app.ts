@@ -6,17 +6,79 @@ import { peerjs } from './peerJS.js'
 
 type AppType = "single" | "host" | "guest" | "build"
 
+const app_type = window.location.href.split('?')[1] as AppType
+var peer = null
+var conn = null
+
+function join(id: string): void{
+    if (conn) {
+        conn.close();
+    }
+    conn = peer.connect(id)
+    conn.on('data', function(data) {
+        console.log(data);
+        if (app_type == "guest" && typeof data === 'object') {
+            app.load_from_game(app.load_game_from_JSON(data))
+            app.vboard.reset_board()
+            app.draw()
+        }
+    });
+    conn.on('open', function() {
+        console.log('Connected to ', conn.peer);
+        conn.send("Sent from guest")
+    });
+}
+
+
 class App {
     game: Game
+    game_JSON: string
     vboard: Visual_Board
-    app_type: AppType
     friend_id: string
-    peer: peerjs.Peer
     constructor(){
-        this.game = this.load_game_from_local_storage()
+        this.initialise(app_type)
+    }
+
+    initialise(app_type: AppType){
+        console.log("Game is ", app_type, " type")
+        let game: Game
+        if (app_type == "single" || app_type == "host") {
+            game = this.load_game_from_local_storage()
+            this.load_from_game(game)
+        }
+        else if (app_type == "guest") {
+            const g = new Game(8, 8, "", "")
+            this.load_from_game(g)
+        }
+        if (app_type == "host" || app_type == "guest") {
+            this.start_networking()
+        }
+    }
+
+    load_game_from_JSON(JSON_data) {
+        const h: number = parseInt(JSON_data['h']), w: number = parseInt(JSON_data['w'])
+        const board_str: string = JSON_data['board_str']
+        const FEN: string = JSON_data['FEN']
+        const g = new Game(w, h, board_str, FEN)
+        return g
+    }
+
+    load_game_from_local_storage(){
+        const JSON_data: string = require("./games.json")
+        const selected_game: string = localStorage.getItem("selected_game")
+        this.game_JSON = JSON_data[selected_game]
+        /*
+        if (conn && conn.open) {
+            conn.send(this.game_JSON)
+        } */
+        const g: Game = this.load_game_from_JSON(this.game_JSON)
+        return g
+    }
+
+    load_from_game(game: Game){
+        this.game = game
         this.vboard = new Visual_Board(this.game)
         this.vboard.make_visual_board()
-        this.get_app_type()
     }
 
     draw() {
@@ -24,39 +86,39 @@ class App {
         this.vboard.draw_pieces(this.game.LabelPiece)
     }
 
-    load_game_from_local_storage(){
-        const JSON_data: string = require("./games.json")
-        const selected_game: string = localStorage.getItem("selected_game")
-        const game = JSON_data[selected_game]
-        const h: number = parseInt(game['h']), w: number = parseInt(game['w'])
-        const board_str: string = game['board_str']
-        const FEN: string = game['FEN']
-        const g = new Game(w, h, board_str, FEN)
-        return g
-    }
-
-    get_app_type(){
-        const url: string = window.location.href
-        const url_split: Array<string> = url.split('?')
-        this.app_type = url_split[1] as AppType
-        if (this.app_type == "guest") {
-            this.friend_id = url_split[2]
-        }
-        else {
-            this.friend_id = ""
-        }
-        this.start_networking()
-    }
-
     start_networking(){
-        this.peer = new peerjs.Peer()
-        this.peer.on('open', function(id) {
-            console.log(id)
+        peer = new peerjs.Peer()
+        const url_split: Array<string> = window.location.href.split('?')
+        const type: AppType = url_split[1] as AppType
+        peer.on('open', function(id) {
+            if (type == "host"){
+                const url: string = url_split[0]
+                console.log(url+"?guest?"+id)
+            }
+            else if (type == "guest") {
+                const friend_id: string = url_split[2]
+                join(friend_id)
+            }
         })
+        peer.on('connection', function(dataConnection){
+            if (type == "host") {
+                conn = dataConnection//join(dataConnection.peer)
+                conn.on('data', function(data) {
+                    console.log(data);
+                });
+                console.log('Connected to ', conn.peer);
+                conn.on('open', function() {
+                    const JSON_data: string = require("./games.json")
+                    const selected_game: string = localStorage.getItem("selected_game")
+                    conn.send("Sent from host")
+                    conn.send(JSON_data[selected_game])
+                });
+                
+            }
+        })
+        
     }
-
     
-
     check_click(x: Pixel, y: Pixel): void{
         const vboard: Visual_Board = this.vboard
         const g: Game = vboard.game
@@ -84,6 +146,7 @@ class App {
                         // TAKE A PIECE
                         const piece: Piece = g.LabelPiece.get(vboard.current_vec[0].label) as Piece
                         g.make_move(vboard.current_vec[0], v_sq.real_sq)
+                        //conn.send("making move")
                         vboard.draw_vector(vboard.current_vec, "default")
                         vboard.current_vec = []
                     }

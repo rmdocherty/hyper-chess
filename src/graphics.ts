@@ -57,7 +57,6 @@ class Visual_Square {
     }
 
     draw(mode: string="default"): void {
-        
         let fill_colour: string = colours[this.real_sq.color]    
         if (mode == "active"){
             fill_colour = colours[this.real_sq.color + "_active"]
@@ -91,7 +90,6 @@ class Visual_Square {
     }
 
     draw_sprite(sprite_addr, points: Array<Pixel>=[]): void {
-        const pads: Array<Pixel> = this.calc_centre_pads(SQ_W, SQ_W)
         let x: Pixel, y: Pixel
         if (points.length > 0) {
             [x, y] = points
@@ -255,6 +253,10 @@ export class Visual_Board extends Board {
         this.add_square(lhs_p.x, rhs_p.y, [], l_points)
         const rest_of_points: Array<Point> = loop_desc[3].slice(1, -1)
         this.add_squares(rest_of_points)
+    }
+
+    reset_board(): void{
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
     draw_board(): void{
