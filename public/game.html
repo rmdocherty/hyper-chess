@@ -11,15 +11,25 @@
 <script>
     var exports = {};
     function require(){};
+    function copy_text(){
+        const inviteText = document.getElementById("inviteText")
+        inviteText.select()
+        inviteText.setSelectionRange(0, 99999)
+        navigator.clipboard.writeText(inviteText.value)
+    }
 </script>
-
-
-
-
 
 
 <div id="container" class="centeredContainer">
     <canvas id="gameBoard" onload="canvasLoad()" height="800" width="600"></canvas>
+</div>
+
+<div id="inviteModal" class="modal">
+    <div class="modal-content">
+        <p>Send this link to your friend to play:</p>
+        <input id="inviteText" readonly="readonly" size="35"></input>&nbsp&nbsp<button onclick="copy_text()">Copy</button>
+        <p>The game will start when they join via the link.</p>
+    </div>
 </div>
 
 <script src="./chess-bundle.js"></script>

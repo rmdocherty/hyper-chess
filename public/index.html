@@ -98,8 +98,10 @@ window.onclick = function(event) {
 }
 
 function joinGame(){
-    const friendID = document.getElementById("friendID").value
-    window.location.href = "game.html?guest?"+friendID
+    const entered_val = document.getElementById("friendID").value
+    const split = entered_val.split("?")
+    window.location.href = "game.html?guest?"+split[split.length-1]//friendID
+    
 }
 </script>
 

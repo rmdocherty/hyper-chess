@@ -201,6 +201,10 @@ export class Game {
         return true;
     }
 
+    takeable(chk_sq: Square, piece: Piece): boolean{
+        return (this.check_if_square_takeable(chk_sq, piece.color) && !(this.check_if_sq_empty(chk_sq, piece)))
+    }
+
     public find_valid_moves(piece: Piece): Array<Move> {
         let valid_moves: Array<Square> = [];
 
@@ -267,10 +271,15 @@ export class Game {
         } // double move
         if (piece.unmoved && this.check_if_sq_empty(s1, piece) && this.check_if_sq_empty(s2, piece)) {
             valid_moves.push(s2)
-        } // en passant
-        if ([atk1, atk2].includes(this.enpassant_sq)) {
+        }
+        //enpassant
+        if (atk1 == this.enpassant_sq && this.check_if_square_takeable(atk1, piece.color) && (this.check_if_sq_empty(atk1, piece))) { //this.check_if_square_takeable(atk1, piece.color) && !(this.check_if_sq_empty(atk1, piece))
             valid_moves.push(this.enpassant_sq)
-        } // first attack
+        }
+        if (atk2 == this.enpassant_sq && this.check_if_square_takeable(atk2, piece.color) && (this.check_if_sq_empty(atk2, piece))) { //this.check_if_square_takeable(atk2, piece.color) && !(this.check_if_sq_empty(atk2, piece))
+            valid_moves.push(this.enpassant_sq)
+        }
+        // first attack
         if (this.check_if_square_takeable(atk1, piece.color) && !(this.check_if_sq_empty(atk1, piece))) {
             valid_moves.push(atk1)
         } // second attack
@@ -357,6 +366,7 @@ export class Game {
         // DOUBLE MOVE
         if ((piece instanceof Pawn) && ((old_p.y - new_p.y)**2 == 4)) {
             const enp_sq: Square = this.board[old_p.y + piece.direction][old_p.x]
+            console.log(enp_sq)
             this.enpassant_sq = enp_sq
             piece.unmoved = false
         } // ENPASASNT

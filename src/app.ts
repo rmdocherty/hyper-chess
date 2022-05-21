@@ -10,13 +10,14 @@ const app_type = window.location.href.split('?')[1] as AppType
 var peer = null
 var conn = null
 
+const words: string = "acdefghijklmnopqrstuvwyzABCEDFGHIJKLMNOPQRSTUVWYZ1234567890"
+
 function join(id: string): void{
     if (conn) {
         conn.close();
     }
     conn = peer.connect(id)
     conn.on('data', function(data) {
-        
         if (app_type == "guest" && typeof data === 'object') {
             app.load_from_game(app.load_game_from_JSON(data))
             app.vboard.reset_board()
@@ -33,22 +34,24 @@ function join(id: string): void{
     });
     conn.on('open', function() {
         console.log('Connected to ', conn.peer);
-        conn.send("Sent from guest")
     });
 }
 
+function rand(l) { return Math.floor(Math.random()*l)}
 
 class App {
     game: Game
     game_JSON: string
     vboard: Visual_Board
     friend_id: string
+    id: string
     constructor(){
         this.initialise(app_type)
     }
 
     initialise(app_type: AppType){
         console.log("Game is ", app_type, " type")
+        this.id = this.gen_id()
         let game: Game
         if (app_type == "single" || app_type == "host") {
             game = this.load_game_from_local_storage()
@@ -63,6 +66,15 @@ class App {
         }
     }
 
+    gen_id(): string{
+        const d = new Date();
+        const len: number = words.length - 1
+        const base_id: Array<number> = [0,0,0,0,0,0]
+        const id: string = base_id.map(p => words[rand(len)]).join('')
+        console.log(id)
+        return id
+    }
+
     load_game_from_JSON(JSON_data) {
         const h: number = parseInt(JSON_data['h']), w: number = parseInt(JSON_data['w'])
         const board_str: string = JSON_data['board_str']
@@ -75,10 +87,6 @@ class App {
         const JSON_data: string = require("./games.json")
         const selected_game: string = localStorage.getItem("selected_game")
         this.game_JSON = JSON_data[selected_game]
-        /*
-        if (conn && conn.open) {
-            conn.send(this.game_JSON)
-        } */
         const g: Game = this.load_game_from_JSON(this.game_JSON)
         return g
     }
@@ -95,7 +103,7 @@ class App {
     }
 
     start_networking(){
-        peer = new peerjs.Peer()
+        peer = new peerjs.Peer(this.id)
         const url_split: Array<string> = window.location.href.split('?')
         const type: AppType = url_split[1] as AppType
         const vboard = this.vboard
@@ -104,6 +112,10 @@ class App {
             if (type == "host"){
                 const url: string = url_split[0]
                 console.log(url+"?guest?"+id)
+                const modal = document.getElementById("inviteModal")
+                const modal_text = document.getElementById("inviteText") as HTMLInputElement
+                modal_text.value = url+"?guest?"+id
+                modal.style.display = "block"
             }
             else if (type == "guest") {
                 const friend_id: string = url_split[2]
@@ -113,6 +125,8 @@ class App {
         peer.on('connection', function(dataConnection){
             if (type == "host") {
                 conn = dataConnection//join(dataConnection.peer)
+                const modal = document.getElementById("inviteModal")
+                modal.style.display = "none"
                 conn.on('data', function(data) {
                     const old_label: string = data[0] + data[1]
                     const new_label: string = data[2] + data[3]
@@ -123,15 +137,13 @@ class App {
                 });
                 console.log('Connected to ', conn.peer);
                 conn.on('open', function() {
+                    // sending objects may not work on safari - could send string instead
                     const JSON_data: string = require("./games.json")
                     const selected_game: string = localStorage.getItem("selected_game")
-                    conn.send("Sent from host")
                     conn.send(JSON_data[selected_game])
                 });
-                
             }
         })
-        
     }
     
     check_click(x: Pixel, y: Pixel): void{
@@ -163,7 +175,9 @@ class App {
                         const end_sq_label: string = v_sq.real_sq.label
                         const piece: Piece = g.LabelPiece.get(start_sq_label) as Piece
                         g.make_move(vboard.current_vec[0], v_sq.real_sq)
-                        conn.send(start_sq_label+end_sq_label)
+                        if (app_type == "guest" || app_type == "host") {
+                            conn.send(start_sq_label+end_sq_label)    
+                        }
                         vboard.draw_vector(vboard.current_vec, "default")
                         vboard.current_vec = []
                     }
