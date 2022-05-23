@@ -49,7 +49,7 @@
         <p></p>
         <a href="game.html?host">Play with a friend</a>
         <p></p>
-        Join a friend: <input type="text" id="friendID"><button onclick="joinGame()">➢</button> 
+        Join a friend: <input type="text" id="friendID"><button onclick="joinButton()">➢</button> 
 
     </div>
 </div>
@@ -97,11 +97,21 @@ window.onclick = function(event) {
     }
 }
 
-function joinGame(){
-    const entered_val = document.getElementById("friendID").value
-    const split = entered_val.split("?")
+window.onload = function(){
+    const url = window.location.href
+    if (url.includes('?')) {
+        joinGame(url)
+    }
+}
+
+function joinGame(friend_string){
+    const split = friend_string.split("?")
     window.location.href = "game.html?guest?"+split[split.length-1]//friendID
-    
+}
+
+function joinButton(){
+    const entered_val = document.getElementById("friendID").value
+    joinGame(entered_val)
 }
 </script>
 

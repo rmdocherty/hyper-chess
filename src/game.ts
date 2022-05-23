@@ -76,7 +76,8 @@ export class Game {
     turn_counter: number;
     game_state: number;
     hyper_tracker: Boolean;
-    global_update: boolean
+    global_update: boolean;
+    winner: Color | boolean;
     constructor(bw: number, bh: number, loop_str: string = "", fen_str: string = "") {
         this.board = new Board(bw, bh, loop_str);
         this.LabelPiece = new LabelPieceMap();
@@ -85,52 +86,53 @@ export class Game {
         this.game_state = 0;
         this.hyper_tracker = true;
         this.global_update = false;
+        this.winner = false;
         this.gen_from_fen(fen_str);
     }
 
     piece_to_square(piece: Piece): Square {
-        const label: Label = this.LabelPiece.get(piece) as Label
-        const point: Point = label_to_point(label)
-        const sq: Square = this.board[point.y][point.x]
+        const label: Label = this.LabelPiece.get(piece) as Label;
+        const point: Point = label_to_point(label);
+        const sq: Square = this.board[point.y][point.x];
         return sq
     }
 
     gen_from_fen(fen_str: string) {
         let fen: string;
-        let type: string
+        let type: string;
         if (fen_str == "") {
-            [type, fen] = base_game_FEN.split(':')
+            [type, fen] = base_game_FEN.split(':');
         }
         else {
-            [type, fen] = fen_str.split(':')
+            [type, fen] = fen_str.split(':');
         }
 
         if (type == "FEN") {
-            this.gen_from_normal_fen(fen)
+            this.gen_from_normal_fen(fen);
         }
         else if (type == "HFEN") {
-            this.gen_from_hfen(fen)
+            this.gen_from_hfen(fen);
         }
         else {
-            throw new Error("FEN string format invalid, must have 1 of FEN: or HFEN: identifier!")
+            throw new Error("FEN string format invalid, must have 1 of FEN: or HFEN: identifier!");
         }
     }
 
     gen_from_normal_fen(fen_str: string) {
         let x: number = this.board.base_board_inds[0];
         let y: number = this.board.base_board_inds[3];
-        this.gen_from_generic_fen(fen_str, x, y)
+        this.gen_from_generic_fen(fen_str, x, y);
     }
 
     gen_from_hfen(hyper_fen_str: string) {
-        let x: number = 0
-        let y: number = WHOLE_BOARD_HEIGHT - 1
-        this.gen_from_generic_fen(hyper_fen_str, x, y)
+        let x: number = 0;
+        let y: number = WHOLE_BOARD_HEIGHT - 1;
+        this.gen_from_generic_fen(hyper_fen_str, x, y);
     }
 
     gen_from_generic_fen(fen_str: string, x0: number, y0: number): void {
-        let x: number = x0
-        let y: number = y0
+        let x: number = x0;
+        let y: number = y0;
         for (let piece_str of fen_str) {
             let lower_case_str: string = piece_str.toLowerCase();
             let color: Color = "white";
@@ -155,9 +157,36 @@ export class Game {
         }
     }
 
+    get_fen_from_game(): string {
+        let fen: string = "HFEN:";
+        for (let iy=WHOLE_BOARD_HEIGHT-1; iy>-1; iy--) {
+            let num: number = 0;
+            for (let ix=0; ix<WHOLE_BOARD_WIDTH; ix++) {
+                const p: Point = this.board[iy][ix].point;
+                const label: string = p.label;
+                if (this.LabelPiece.has(label)) {
+                    const piece: Piece = this.LabelPiece.get(label) as Piece;
+                    let piece_char: string = piece.piece_char;
+                    if (piece.color == "white") {
+                        piece_char = piece_char.toUpperCase();
+                    }
+                    const num_str: string = (num > 0) ? num.toString() : "";
+                    fen = fen + num_str + piece_char;
+                    num = 0;
+                }
+                else {
+                    num += 1;
+                }
+            }
+            const num_str: string = (num > 0) ? num.toString() : "";
+            fen = fen + num_str + '/';
+        }
+        return fen;
+    }
+
     check_if_sq_empty(chk_sq: Square, piece: Piece): boolean{
         // Check if square occupied by anything
-        let label: string
+        let label: string;
         if (chk_sq instanceof Forbidden) {
             return false;
         }
@@ -165,7 +194,7 @@ export class Game {
             label = chk_sq.label;
         }
         catch (TypeError) {
-            return false
+            return false;
         }
         
         if (this.LabelPiece.has(label)) {
@@ -179,18 +208,16 @@ export class Game {
     }
 
     check_if_square_takeable(chk_sq: Square, color: Color) : boolean {
-        let label:string
+        let label:string;
         if (chk_sq instanceof Forbidden) {
             return false;
         }
-
         try {
             label = chk_sq.label;
         }
         catch (TypeError) {
-            return false
+            return false;
         }
-
         label = chk_sq.label;
         if (this.LabelPiece.has(label)) {
             const piece: Piece = this.LabelPiece.get(label) as Piece;
@@ -202,28 +229,28 @@ export class Game {
     }
 
     takeable(chk_sq: Square, piece: Piece): boolean{
-        return (this.check_if_square_takeable(chk_sq, piece.color) && !(this.check_if_sq_empty(chk_sq, piece)))
+        return (this.check_if_square_takeable(chk_sq, piece.color) && !(this.check_if_sq_empty(chk_sq, piece)));
     }
 
     public find_valid_moves(piece: Piece): Array<Move> {
         let valid_moves: Array<Square> = [];
 
         if (piece instanceof Pawn) {
-            valid_moves = this.find_valid_pawn_moves(piece)
-            return valid_moves
+            valid_moves = this.find_valid_pawn_moves(piece);
+            return valid_moves;
         }
         else if ((piece instanceof King) && (piece.unmoved == true)) {
-            const castle_moves: Array<Square> = this.check_castling(piece)
-            valid_moves = valid_moves.concat(castle_moves) 
+            const castle_moves: Array<Square> = this.check_castling(piece);
+            valid_moves = valid_moves.concat(castle_moves);
         }
 
         for (let mv of piece.move_vectors) { //BUG: if we start on a hypersquare, the link sq is added for the first move vector and no others, so piece appears stuck!
             const current_sq_label: Label = this.LabelPiece.get(piece) as Label;
             const current_point: Point = label_to_point(current_sq_label);
-            const current_sq: Square = this.board.get_sq(current_point)
+            const current_sq: Square = this.board.get_sq(current_point);
             if (piece.move_continuous == true) {
                 const current_mv_moves: Array<Square> = this.raycast(piece, current_sq, mv, []);
-                valid_moves = valid_moves.concat(current_mv_moves)
+                valid_moves = valid_moves.concat(current_mv_moves);
             }
             else {
                 const new_point: Point = current_point.add(mv);
@@ -234,7 +261,7 @@ export class Game {
             }
         }
         
-        return valid_moves
+        return valid_moves;
     }
 
     check_castling(piece: King) {
@@ -354,6 +381,7 @@ export class Game {
         const new_label: Label = new_sq.label
         const old_p: Point = old_sq.point
         const new_p: Point = new_sq.point
+        const taken_piece: Piece = this.LabelPiece.get(new_label) as Piece
         const piece: Piece = this.LabelPiece.get(old_label) as Piece
 
         // NORMAL MOVE LOGIC
@@ -362,6 +390,12 @@ export class Game {
         }
         this.LabelPiece.delete(old_label)
         this.LabelPiece.set(new_label, piece)
+
+        if (taken_piece instanceof King) {
+            this.winner = piece.color
+        }
+
+        // Can clean up this next bit by only setting global_update and en_passant square when false or not null respectively
         
         // DOUBLE MOVE
         if ((piece instanceof Pawn) && ((old_p.y - new_p.y)**2 == 4)) {

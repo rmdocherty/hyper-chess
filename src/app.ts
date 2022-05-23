@@ -110,11 +110,11 @@ class App {
         const game = this.game
         peer.on('open', function(id) {
             if (type == "host"){
-                const url: string = url_split[0]
-                console.log(url+"?guest?"+id)
+                const host_split: Array<string> = window.location.href.split('/')
+                const url: string = host_split[0] + host_split[1] + host_split[2] //url_split[0]
                 const modal = document.getElementById("inviteModal")
                 const modal_text = document.getElementById("inviteText") as HTMLInputElement
-                modal_text.value = url+"?guest?"+id
+                modal_text.value = url +'?' + id //url+"?guest?"+id
                 modal.style.display = "block"
             }
             else if (type == "guest") {
@@ -124,7 +124,7 @@ class App {
         })
         peer.on('connection', function(dataConnection){
             if (type == "host") {
-                conn = dataConnection//join(dataConnection.peer)
+                conn = dataConnection //join(dataConnection.peer)
                 const modal = document.getElementById("inviteModal")
                 modal.style.display = "none"
                 conn.on('data', function(data) {
@@ -140,7 +140,9 @@ class App {
                     // sending objects may not work on safari - could send string instead
                     const JSON_data: string = require("./games.json")
                     const selected_game: string = localStorage.getItem("selected_game")
-                    conn.send(JSON_data[selected_game])
+                    let game_JSON = JSON_data[selected_game]
+                    game_JSON["FEN"] = app.game.get_fen_from_game() //this is terrible but needed to work
+                    conn.send(game_JSON) //JSON_data[selected_game]
                 });
             }
         })
@@ -197,6 +199,13 @@ class App {
         if (on_board == false) {
             vboard.draw_vector(vboard.current_vec, "default")
             vboard.current_vec = []
+        }
+        if (g.winner != false) { //put this into an app based make_move function s.t it happens on host and guest.
+            const win_text: HTMLElement = document.getElementById("winText")
+            const winner: string = (g.winner == "black") ? "Black" : "White"
+            win_text.innerHTML = winner
+            const win_modal: HTMLElement = document.getElementById("winModal")
+            win_modal.style.display = "block"
         }
     }
 }

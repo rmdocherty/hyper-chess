@@ -17,6 +17,9 @@
         inviteText.setSelectionRange(0, 99999)
         navigator.clipboard.writeText(inviteText.value)
     }
+    function quit(){
+        window.location.href = ""
+    }
 </script>
 
 
@@ -29,6 +32,12 @@
         <p>Send this link to your friend to play:</p>
         <input id="inviteText" readonly="readonly" size="35"></input>&nbsp&nbsp<button onclick="copy_text()">Copy</button>
         <p>The game will start when they join via the link.</p>
+    </div>
+</div>
+
+<div id="winModal" class="modal">
+    <div class="modal-content">
+        <span id="winText">Default</span> wins! &nbsp&nbsp<button onclick="quit()">Home</button>
     </div>
 </div>
 
