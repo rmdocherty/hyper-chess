@@ -30,7 +30,7 @@ const SQ_W: Pixel = 50;
 
 class Visual_Square {
     real_sq: Square;
-    points: Array<number>;
+    points: Array<Array<number>>;
     midpoint: Array<number>;
     type: string;
     bbox: Array<Array<number>>;
@@ -62,7 +62,7 @@ class Visual_Square {
             fill_colour = colours[this.real_sq.color + "_active"]
         }
         ctx.fillStyle = fill_colour
-        let p1: number = this.points[0]
+        let p1: Array<number> = this.points[0]
         
         ctx.beginPath()
         ctx.moveTo(p1[0], p1[1])
@@ -101,7 +101,6 @@ class Visual_Square {
     }
 
     draw_circle(): void {
-        let pads: Array<Pixel>  = this.calc_centre_pads(SQ_W, SQ_W)
         let real_x: Pixel = this.midpoint[0], real_y: Pixel =this.midpoint[1]
         ctx.fillStyle = colours["circle"]
         ctx.beginPath();
@@ -131,6 +130,18 @@ class Visual_Square {
         ctx.fillStyle = "black";
         
         ctx.fillText(this.real_sq.label, real_x, real_y);
+    }
+
+    remap_bbox(): Array<Array<number>> {
+        const [p1, p2, p3, p4]: Array<Array<number>> = this.bbox
+        return [p2, p1, p4, p3]
+    }
+
+    flip(flip_y: number): void {
+        this.points = this.points.map(p => [p[0], flip_y-p[1]])
+        this.bbox = this.bbox.map(p => [p[0], flip_y-p[1]])
+        this.bbox = this.remap_bbox()
+        this.midpoint = [this.midpoint[0], flip_y-this.midpoint[1]]
     }
 }
 
@@ -164,6 +175,11 @@ export class Visual_Board extends Board {
     }
 
     make_board(loop_string: string): void {}
+
+    flip_board(): void {
+        const flip_y: number = this.y_offset_px + (WHOLE_BOARD_HEIGHT + 1) * SQ_W;
+        this.forEach(row => row.forEach(sq => {sq.flip(flip_y)})) //square.flip(flip_y)
+    }
 
     background_obj(x: number, y: number): any {
         const sq = new Visual_Square_Forbidden(this.game.board[y][x], [0, 0], [0, 0], "none")
@@ -283,6 +299,11 @@ export class Visual_Board extends Board {
         }
     }
 
+    reset_current_vec(): void {
+        this.draw_vector(this.current_vec, "default")
+        this.current_vec = []
+    }
+
     draw_pieces(LabelPieceMap): void{
         for (let [label, piece] of LabelPieceMap.LabelToPiece) {
             const point: Point = label_to_point(label);//piece.position
@@ -324,6 +345,13 @@ export class Visual_Board extends Board {
                 this.add_squares(l[3])
             }
         }  
+    }
+
+    make_move_by_label(old_sq_label: string, new_sq_label: string): void{
+        this.game.make_move_by_label(old_sq_label, new_sq_label)
+        this.reset_current_vec()
+        //this.draw_vector(this.current_vec, "default")
+        //this.current_vec = []
     }
     
 }

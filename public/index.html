@@ -45,12 +45,20 @@
         </select>
 
         <p></p>
+        Colour: 
+        <input type="radio" id="chooseBlack" name="chooseColour" value="black">
+        <label for="chooseBlack">Black</label>
+        <input type="radio" id="chooseWhite" name="chooseColour" value="white">
+        <label for="chooseWhite">White</label>
+        <input type="radio" id="chooseRandom" name="chooseColour" value="random">
+        <label for="chooseBlack">Random</label>
+
+        <p></p>
         <a href="game.html?single">Over-The-Board</a>
         <p></p>
         <a href="game.html?host">Play with a friend</a>
         <p></p>
         Join a friend: <input type="text" id="friendID"><button onclick="joinButton()">➢</button> 
-
     </div>
 </div>
 
@@ -80,7 +88,6 @@ function gameSelect(){
 }
 
 let modal = document.getElementById("playModal");
-let btn = document.getElementById("playButton");
 let span = document.getElementsByClassName("close")[0];
 
 function showPlayModal() {
@@ -102,6 +109,8 @@ window.onload = function(){
     if (url.includes('?')) {
         joinGame(url)
     }
+    localStorage.setItem("colour", "random")
+    localStorage.setItem("selected_game", "hyper")
 }
 
 function joinGame(friend_string){
@@ -113,6 +122,12 @@ function joinButton(){
     const entered_val = document.getElementById("friendID").value
     joinGame(entered_val)
 }
+
+const radioButtons = document.getElementsByName("chooseColour")
+console.log(radioButtons)
+radioButtons.forEach(element => {
+    element.onclick = function() {localStorage.setItem("colour", element.value)}
+});
 </script>
 
 </body>

@@ -1,4 +1,4 @@
-import { Forbidden, Square, Label } from './squares'
+import { Forbidden, Square, Label, Color } from './squares'
 import { Piece } from './pieces'
 import { Game } from './game'
 import { Visual_Board, Pixel, canvas} from './graphics'
@@ -19,9 +19,16 @@ function join(id: string): void{
     conn = peer.connect(id)
     conn.on('data', function(data) {
         if (app_type == "guest" && typeof data === 'object') {
-            app.load_from_game(app.load_game_from_JSON(data))
+            app.load_from_game(app.load_game_from_JSON(data, app.game.player))
             app.vboard.reset_board()
+            if (app.game.player == "white") {
+                app.flip_board()
+            }
             app.draw()
+        }
+        else if (typeof data === 'string' && data.length == 5) {
+            const colour: Color = data as Color
+            app.game.player = colour
         }
         else if (typeof data === 'string' && data.length == 4) {
             const old_label: string = data[0] + data[1]
@@ -58,7 +65,7 @@ class App {
             this.load_from_game(game)
         }
         else if (app_type == "guest") {
-            const g = new Game(8, 8, "", "")
+            const g = new Game(8, 8, "white", "", "")
             this.load_from_game(g)
         }
         if (app_type == "host" || app_type == "guest") {
@@ -75,19 +82,20 @@ class App {
         return id
     }
 
-    load_game_from_JSON(JSON_data) {
+    load_game_from_JSON(JSON_data, colour_string: string) : Game{
         const h: number = parseInt(JSON_data['h']), w: number = parseInt(JSON_data['w'])
         const board_str: string = JSON_data['board_str']
         const FEN: string = JSON_data['FEN']
-        const g = new Game(w, h, board_str, FEN)
+        const g = new Game(w, h, colour_string, board_str, FEN)
         return g
     }
 
-    load_game_from_local_storage(){
+    load_game_from_local_storage(): Game{
         const JSON_data: string = require("./games.json")
         const selected_game: string = localStorage.getItem("selected_game")
         this.game_JSON = JSON_data[selected_game]
-        const g: Game = this.load_game_from_JSON(this.game_JSON)
+        const colour_string: string = localStorage.getItem("colour")
+        const g: Game = this.load_game_from_JSON(this.game_JSON, colour_string)
         return g
     }
 
@@ -102,10 +110,19 @@ class App {
         this.vboard.draw_pieces(this.game.LabelPiece)
     }
 
+    flip_board() {
+        this.vboard.flip_board()
+    }
+
+    make_move_by_label(old_sq_label: string, new_sq_label: string): void{
+        this.vboard.make_move_by_label(old_sq_label, new_sq_label)
+    }
+
     start_networking(){
         peer = new peerjs.Peer(this.id)
         const url_split: Array<string> = window.location.href.split('?')
         const type: AppType = url_split[1] as AppType
+        const player_col: Color = this.game.player
         const vboard = this.vboard
         const game = this.game
         peer.on('open', function(id) {
@@ -138,10 +155,12 @@ class App {
                 console.log('Connected to ', conn.peer);
                 conn.on('open', function() {
                     // sending objects may not work on safari - could send string instead
+                    const opponent_color: Color = (player_col == "white") ? "black" : "white"
+                    conn.send(opponent_color)
                     const JSON_data: string = require("./games.json")
                     const selected_game: string = localStorage.getItem("selected_game")
                     let game_JSON = JSON_data[selected_game]
-                    game_JSON["FEN"] = app.game.get_fen_from_game() //this is terrible but needed to work
+                    game_JSON["FEN"] = app.game.get_fen_from_game() //this is terrible but needed to 
                     conn.send(game_JSON) //JSON_data[selected_game]
                 });
             }
@@ -175,13 +194,10 @@ class App {
                         // TAKE A PIECE
                         const start_sq_label: string = vboard.current_vec[0].label
                         const end_sq_label: string = v_sq.real_sq.label
-                        const piece: Piece = g.LabelPiece.get(start_sq_label) as Piece
-                        g.make_move(vboard.current_vec[0], v_sq.real_sq)
+                        this.make_move_by_label(start_sq_label, end_sq_label)
                         if (app_type == "guest" || app_type == "host") {
                             conn.send(start_sq_label+end_sq_label)    
                         }
-                        vboard.draw_vector(vboard.current_vec, "default")
-                        vboard.current_vec = []
                     }
                 }
                 
@@ -197,8 +213,7 @@ class App {
             }
         }
         if (on_board == false) {
-            vboard.draw_vector(vboard.current_vec, "default")
-            vboard.current_vec = []
+            vboard.reset_current_vec()
         }
         if (g.winner != false) { //put this into an app based make_move function s.t it happens on host and guest.
             const win_text: HTMLElement = document.getElementById("winText")
@@ -214,6 +229,9 @@ class App {
 let app: App = new App()
 
 window.onload = function() {
+    if (app.game.player == "white") {
+        app.flip_board()
+    }
     app.draw()
 }
 

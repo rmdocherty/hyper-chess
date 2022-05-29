@@ -77,8 +77,10 @@ export class Game {
     game_state: number;
     hyper_tracker: Boolean;
     global_update: boolean;
+    player: Color;
     winner: Color | boolean;
-    constructor(bw: number, bh: number, loop_str: string = "", fen_str: string = "") {
+    constructor(bw: number, bh: number, colour_string: string, 
+                loop_str: string = "", fen_str: string = "") {
         this.board = new Board(bw, bh, loop_str);
         this.LabelPiece = new LabelPieceMap();
         this.enpassant_flag = false;
@@ -86,8 +88,22 @@ export class Game {
         this.game_state = 0;
         this.hyper_tracker = true;
         this.global_update = false;
+        this.player = this.get_colour(colour_string)
         this.winner = false;
         this.gen_from_fen(fen_str);
+    }
+
+    get_colour(colour_string: string): Color {
+        let colour: Color;
+        if (colour_string == "black" || colour_string == "white") {
+            colour = colour_string
+        }
+        else {
+            const random_index: number = Math.floor(Math.random()*2)
+            const colours: Array<Color> = ["white", "black"]
+            colour = colours[random_index]
+        }
+        return colour
     }
 
     piece_to_square(piece: Piece): Square {
