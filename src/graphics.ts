@@ -12,7 +12,8 @@ let arch_pair_count: number = 1;
 let line_pair_count: number = 1;
 
 const classic = {"bg": "#ebe5c0", "black": "#cab175", "white": "#e9daB5", 
-                "black_active": "#bf8558", "white_active": "#e69f6a", "active": "#84a360", 
+                "black_active": "#67b553", "white_active": "#93e37f", "active": "#84a360", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666",
                 "menu": "#a52a2a", "circle": "#3eb053", "hyper_light": "#fce8b1",
                 "hyper_dark": "#80765d"}
 
@@ -58,8 +59,8 @@ class Visual_Square {
 
     draw(mode: string="default"): void {
         let fill_colour: string = colours[this.real_sq.color]    
-        if (mode == "active"){
-            fill_colour = colours[this.real_sq.color + "_active"]
+        if (mode == "active" || mode == "inactive"){
+            fill_colour = colours[this.real_sq.color + "_" + mode]
         }
         ctx.fillStyle = fill_colour
         let p1: Array<number> = this.points[0]
@@ -156,6 +157,12 @@ class Visual_Square_Forbidden extends Visual_Square {
     }
 }
 
+let frame_count: number = 0;
+let positions: Array<Array<Pixel>>;
+let initial_visual_square: Visual_Square;
+let moving_sprite: HTMLImageElement
+let draw_vec;
+
 
 export class Visual_Board extends Board {
     game: Game
@@ -229,6 +236,7 @@ export class Visual_Board extends Board {
         for (let i=0;i<coords.length;i++){
             const p: Point = points[i]
             this[p.y][p.x] = new Visual_Square(this.game.board[p.y][p.x], coords[i], midpoints[i], "curved")
+            this[p.y][p.x].real_sq.color = (i%2==0) ? "white" : "black"
         }
     }
 
@@ -266,7 +274,7 @@ export class Visual_Board extends Board {
     
         }
         this.add_square(rhs_p.x, rhs_p.y, [], r_points)
-        this.add_square(lhs_p.x, rhs_p.y, [], l_points)
+        this.add_square(lhs_p.x, lhs_p.y, [], l_points)
         const rest_of_points: Array<Point> = loop_desc[3].slice(1, -1)
         this.add_squares(rest_of_points)
     }
@@ -287,6 +295,7 @@ export class Visual_Board extends Board {
     }
 
     draw_vector(vector: Array<Square>, mode:string="default"): void {
+        //console.log("drawing vector")
         for (let sq of vector) {
             let x: number = sq.x, y: number = sq.y
             let gfx_sq: Visual_Square = this[y][x]        
@@ -348,10 +357,67 @@ export class Visual_Board extends Board {
     }
 
     make_move_by_label(old_sq_label: string, new_sq_label: string): void{
+        const piece: Piece = this.game.LabelPiece.get(old_sq_label) as Piece
+        //this.start_animation(this.current_vec, piece)
         this.game.make_move_by_label(old_sq_label, new_sq_label)
+        
         this.reset_current_vec()
         //this.draw_vector(this.current_vec, "default")
         //this.current_vec = []
+    }
+    
+    gen_points_between_squares(v_sq1: Visual_Square, v_sq2: Visual_Square, N: number=7): Array<Array<Pixel>> {
+        let points: Array<Array<Pixel>> = []
+        // Draw straight line between midpoints
+        const x0: Pixel = v_sq1.midpoint[0], y0: Pixel = v_sq1.midpoint[1]
+        const dx: number = (v_sq2.real_sq.x - v_sq1.real_sq.x)
+        const dy: number = v_sq2.real_sq.y - v_sq1.real_sq.y
+        const magnitude: number = Math.sqrt(Math.pow(dx, 2) +  Math.pow(dy, 2))
+        console.log(magnitude)
+    
+        if (magnitude > 4) { // large jump (i.e across the board)
+            const x1: Pixel = v_sq2.midpoint[0], y1: Pixel = v_sq2.midpoint[1]
+            points = [[x0, y0], [x1, y1]]
+        }
+        else { //else smooth increase across line connecting midpoints
+            const epsilon: number = 1/N
+            for (let i=0; i<N; i++){
+                const point: Array<Pixel> = [(x0+epsilon*i*dx*SQ_W)-SQ_W/2, (y0+epsilon*i*dy*SQ_W)-SQ_W/2]
+                points.push(point)
+            }
+        }
+        return points
+    }
+
+    start_animation(vector: Array<Square>, piece: Piece): void {
+        frame_count = 0
+        positions = []
+        const p: Point = vector[0].point
+        initial_visual_square = this[p.y][p.x]
+        moving_sprite = piece.img
+        draw_vec = this.current_vec
+        for (let i=0; i < vector.length-1; i++){
+            const v_sq_1: Visual_Square = this[vector[i].y][vector[i].x]
+            const v_sq_2: Visual_Square = this[vector[i+1].y][vector[i+1].x]
+            const points: Array<Array<Pixel>> = this.gen_points_between_squares(v_sq_1, v_sq_2)
+            positions = positions.concat(points)
+        }
+        this.animate()
+    }
+
+    animate(): number {
+        if (frame_count >= positions.length) {
+            this.draw_vector(draw_vec, "default")
+            return 0
+        }
+        else {
+            this.draw_vector(draw_vec, "default")
+            initial_visual_square.draw_sprite(moving_sprite, positions[frame_count])
+            frame_count += 1
+            //this.draw_board()//this.draw_vector(this.current_vec, "default")
+            //this.draw_pieces(this.game.LabelPiece)
+            window.requestAnimationFrame(this.animate.bind(this)) //this.animate.bind(this)
+        }
     }
     
 }

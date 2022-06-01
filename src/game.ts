@@ -78,6 +78,7 @@ export class Game {
     hyper_tracker: Boolean;
     global_update: boolean;
     player: Color;
+    current_turn: Color
     winner: Color | boolean;
     constructor(bw: number, bh: number, colour_string: string, 
                 loop_str: string = "", fen_str: string = "") {
@@ -89,6 +90,7 @@ export class Game {
         this.hyper_tracker = true;
         this.global_update = false;
         this.player = this.get_colour(colour_string)
+        this.current_turn = "white"
         this.winner = false;
         this.gen_from_fen(fen_str);
     }
@@ -458,5 +460,6 @@ export class Game {
         else {
             this.global_update = false
         }
+        this.current_turn = (this.current_turn == "white") ? "black" : "white"
     }
 }

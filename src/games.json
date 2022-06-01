@@ -21,7 +21,7 @@
         "w": "8", 
         "h" : "8",
         "board_str" : "xLdeme%xLdfmf%xLdgmg%xLdhmh%xLdimi%xLdjmj%xLdkmk%xLdlml%yLbdbm%yLcdcm%yLdddm%yLedem%yLfdfm%yLgdgm%yLhdhm%yLidim%yLjdjm%yLkdkm%yLldlm%yLmdmm%yLndnm%yLodom%xLdbmb%xLdcmc%xLddmd%xLdmmm%xLdnmn%xLdomo",
-        "FEN" : "HFEN:16/16/16/4pppppppp4/4rnbqkbnr4/4pppppppp4/8/8/8/8/4PPPPPPPP4/4RNBQKBNR4/4PPPPPPPP4"
+        "FEN" : "HFEN:16/16/16/4pppppppp4/4rnbqkbnr4/4pppppppp4/8/8/8/8/4PPPPPPPP4/4RNBQKBNR4/4PPPPPPPP4/16/16/16"
     },
     "los_alamos" : {
         "w": "6", 
@@ -46,5 +46,11 @@
         "h" : "8",
         "board_str" : "xnde%xndf%xndg%xndh%xndi%xndj%xndk%xndl%xnme%xnmf%xnmg%xnmh%xnmi%xnmj%xnmk%xnml%xhcenl%xhcfnk%xhcgnj%xhchni%xhcinh%xhcjng%xhcknf%xhclne",
         "FEN" : "HFEN:16/16/16/16/3prnbqkbnrp3/4pppppppp4/8/8/8/8/4PPPPPPPP4/3PRNBQKBNRP3/16"
+    },
+    "test_line" : {
+        "w": "8", 
+        "h" : "8",
+        "board_str" : "yLgdgm",
+        "FEN" : ""
     }
 }

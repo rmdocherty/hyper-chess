@@ -4,9 +4,11 @@ import { Game } from './game'
 import { Visual_Board, Pixel, canvas} from './graphics'
 import { peerjs } from './peerJS.js'
 
+
 type AppType = "single" | "host" | "guest" | "build"
 
 const app_type = window.location.href.split('?')[1] as AppType
+
 var peer = null
 var conn = null
 
@@ -181,37 +183,57 @@ class App {
                     if (vboard.current_vec.length == 0){
                         vboard.current_vec.push(v_sq.real_sq)
                     }
-                    const label: Label = v_sq.real_sq.point.label
-                    const is_occupied: boolean = g.LabelPiece.has(label)
+                    const end_sq_label: Label = v_sq.real_sq.point.label
+                    const is_occupied: boolean = g.LabelPiece.has(end_sq_label)
+                    const piece: Piece = g.LabelPiece.get(end_sq_label) as Piece
                     
                     if (is_occupied && vboard.current_vec.length == 1) {
                         // PICKING A PIECE CASE
-                        const piece: Piece = g.LabelPiece.get(label) as Piece
                         const moves: Array<Square> = g.find_valid_moves(piece)
                         vboard.current_vec = vboard.current_vec.concat(moves)
                     }
                     else if (is_move) {
                         // TAKE A PIECE
                         const start_sq_label: string = vboard.current_vec[0].label
-                        const end_sq_label: string = v_sq.real_sq.label
-                        this.make_move_by_label(start_sq_label, end_sq_label)
-                        if (app_type == "guest" || app_type == "host") {
-                            conn.send(start_sq_label+end_sq_label)    
+                        const start_piece: Piece = g.LabelPiece.get(start_sq_label) as Piece
+                        if (start_piece.color == this.game.current_turn) {
+                            this.make_move_by_label(start_sq_label, end_sq_label)
+                            if (app_type == "guest" || app_type == "host") {
+                                conn.send(start_sq_label+end_sq_label)    
+                            }
                         }
+                        else {
+                            vboard.reset_current_vec()
+                        }       
                     }
                 }
-                
-                if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed
-                    vboard.draw_board()
-                    vboard.draw_pieces(g.LabelPiece)
-                    g.global_update = false
-                }
-                else{
-                    vboard.draw_vector(vboard.current_vec, "active")
-                }
-                
             }
         }
+        let chosen_piece: Piece;
+        if (vboard.current_vec.length > 0) {
+            const current_label: Label = vboard.current_vec[0].label
+            if (g.LabelPiece.has(current_label)) {
+                chosen_piece = g.LabelPiece.get(current_label) as Piece
+            }
+            
+        }
+        
+        if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed
+            vboard.draw_board()
+            vboard.draw_pieces(g.LabelPiece)
+            g.global_update = false
+        }
+        
+        else if (chosen_piece != null && chosen_piece.color == this.game.current_turn){
+            vboard.draw_vector(vboard.current_vec, "active")
+        }
+        else if (chosen_piece != null && !(chosen_piece.color == this.game.current_turn)){
+            vboard.draw_vector(vboard.current_vec, "inactive")
+        }
+        else {
+            vboard.draw_vector(vboard.current_vec, "active")
+        }
+
         if (on_board == false) {
             vboard.reset_current_vec()
         }
