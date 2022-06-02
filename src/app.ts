@@ -187,12 +187,12 @@ class App {
                     const is_occupied: boolean = g.LabelPiece.has(end_sq_label)
                     const piece: Piece = g.LabelPiece.get(end_sq_label) as Piece
                     
-                    if (is_occupied && vboard.current_vec.length == 1) {
+                    if (is_occupied && vboard.current_vec.length == 1) { //&& vboard.current_vec.length == 1
                         // PICKING A PIECE CASE
                         const moves: Array<Square> = g.find_valid_moves(piece)
                         vboard.current_vec = vboard.current_vec.concat(moves)
                     }
-                    else if (is_move) {
+                    else if ((is_move) && (v_sq.real_sq != vboard.current_vec[0])) {
                         // TAKE A PIECE
                         const start_sq_label: string = vboard.current_vec[0].label
                         const start_piece: Piece = g.LabelPiece.get(start_sq_label) as Piece
@@ -206,6 +206,14 @@ class App {
                             vboard.reset_current_vec()
                         }       
                     }
+                    else if (is_occupied){
+                        vboard.reset_current_vec()
+                        const moves: Array<Square> = g.find_valid_moves(piece)
+                        vboard.current_vec = moves
+                    }
+                    else {
+                        vboard.reset_current_vec()
+                    }
                 }
             }
         }
@@ -215,7 +223,6 @@ class App {
             if (g.LabelPiece.has(current_label)) {
                 chosen_piece = g.LabelPiece.get(current_label) as Piece
             }
-            
         }
         
         if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed

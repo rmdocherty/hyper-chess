@@ -3,6 +3,9 @@ export const WHOLE_BOARD_WIDTH: number = 16
 export const WHOLE_BOARD_HEIGHT: number = 16
 export const alphabet: string = "abcdefghijklmnop";
 
+export function dot(a: Point, b: Point): number {
+    return a.x * b.x + a.y * b.y
+}
 
 //========POINTS AND VECTORS========
 export class Point {
@@ -116,6 +119,8 @@ export class Hyper extends Square {
         return out_vec;
     }
 }
+
+export class Line extends Hyper {}
 
 export class Link extends Hyper {
     /* Link:

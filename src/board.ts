@@ -1,5 +1,5 @@
 import { alphabet, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares"
-import { Square, Forbidden, Hyper, Link, Arch, Circle } from "./squares"
+import { Square, Forbidden, Hyper, Line, Link, Arch, Circle } from "./squares"
 import { label_to_point } from "./squares"
 import { Point, Align } from "./squares"
 
@@ -14,7 +14,7 @@ type LoopEnds = Hyper | Link | Arch | Circle;
 type LoopType = "loop" | "pair" | "single"
 export type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
 
-const CHAR_TO_LOOP = {"s": Hyper, "l": Link, "c": Circle, "a": Arch, "n": Square, "f": Forbidden, "h": Hyper};
+const CHAR_TO_LOOP = {"s": Line, "l": Link, "c": Circle, "a": Arch, "n": Square, "f": Forbidden, "h": Hyper};
 //NB THIS IS DEIFNED LEFT TO RIGHT BOTTOM TO TOP I.E ASSUMES START AND END POINTS DEFINED THAT WAY
 const ALIGN_TO_DIR = {"x": [-1,-1], "y": [1, 1], "t": [1, 1], "b": [1, -1]}
 

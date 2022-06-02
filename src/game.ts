@@ -1,5 +1,5 @@
-import { alphabet, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares";
-import { label_to_point, x_y_to_label } from "./squares";
+import { alphabet, Line, WHOLE_BOARD_HEIGHT, WHOLE_BOARD_WIDTH } from "./squares";
+import { label_to_point, x_y_to_label, dot } from "./squares";
 import { Point, Color, Vector, Label } from "./squares";
 import { Square, Forbidden, Hyper, Link, Arch, Circle } from "./squares";
 import { Board } from "./board";
@@ -341,6 +341,13 @@ export class Game {
                 const lx: number = link_point.x;
                 const ly: number = link_point.y;
                 const link_sq = this.board[ly][lx] as Hyper;
+                if ((link_sq instanceof Line)) { //stops double column effect
+                    const delta: Point = new Point(link_sq.x - current_sq.x, link_sq.y - current_sq. y)
+                    if (dot(delta, mv) == 0) {
+                        return valid_moves
+                    }
+                }
+                
                 if (!(link_sq instanceof Link) && !(valid_moves.includes(link_sq))) {
                     mv = link_sq.invert(mv);
                     valid_moves = this.raycast(piece, link_sq, mv, valid_moves);

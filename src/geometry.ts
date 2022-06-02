@@ -1,6 +1,7 @@
 import { Point, Align } from './squares'
 
 export const ALIGN_TO_OFFSET = {"t":[1, 0], "b": [1, 2], "x": [2, 1], "y": [0, 1]};
+type Pixel = number
 
 export function get_angles(loop: Array<Point>, angle: number=180): Array<Array<number>> {
     let d_theta: number = angle / loop.length
