@@ -4,7 +4,6 @@ import { Game } from './game'
 import { Visual_Board, Pixel, canvas} from './graphics'
 import { peerjs } from './peerJS.js'
 
-
 type AppType = "single" | "host" | "guest" | "build"
 
 const app_type = window.location.href.split('?')[1] as AppType
@@ -130,7 +129,7 @@ class App {
         peer.on('open', function(id) {
             if (type == "host"){
                 const host_split: Array<string> = window.location.href.split('/')
-                const url: string = host_split[0] + host_split[1] + host_split[2] //url_split[0]
+                const url: string = host_split[0] + "//" + host_split[1] + host_split[2] //url_split[0]
                 const modal = document.getElementById("inviteModal")
                 const modal_text = document.getElementById("inviteText") as HTMLInputElement
                 modal_text.value = url +'?' + id //url+"?guest?"+id
@@ -173,6 +172,7 @@ class App {
         const vboard: Visual_Board = this.vboard
         const g: Game = vboard.game
         let on_board: boolean = false
+        //console.log("test")
         for (let row of vboard){
             for (let v_sq of row) {
                 let min_p = v_sq.bbox[0]

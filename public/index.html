@@ -7,20 +7,11 @@
 </head>
 
 <body>
-
-<div class="fakeBody">
-    <h1>HYPERCHESS</h1>
-    <div class="buttonContainer">
-        <button id="playButton" onclick="showPlayModal()" class="mainButtons">PLAY</button><button class="mainButtons">BUILD</button>
-    </div>
-    
-    
-    
     <div id="playModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             Variant:
-            <select onchange="gameSelect()" id="game_select">
+            <select onchange="gameSelect()" id="game_select" class="dropdown">
                 <option value="hyper">HYPER</option>
                 <option value="normal">Normal</option>
                 <option value="cylindrical">Cylindrical</option>
@@ -30,16 +21,16 @@
                 <option value="test_pair">Test Pair</option>
                 <option value="test_line">Test Line</option>
             </select>
-            &nbsp&nbsp Time (minutes):
-            <select>
+            &nbsp&nbsp Time (mins):
+            <select class="dropdown">
                 <option value="0">None</option>
                 <option value="1">1</option>
                 <option value="5">5</option>
                 <option value="10">10</option>
                 <option value="15">15</option>
             </select>
-            &nbsp&nbsp Increment (seconds):
-            <select>
+            &nbsp&nbsp Increment (s):
+            <select class="dropdown">
                 <option value="0">0</option>
                 <option value="1">1</option>
                 <option value="5">5</option>
@@ -57,14 +48,18 @@
             <label for="chooseBlack">Random</label>
     
             <p></p>
-            <a href="game.html?single">Over-The-Board</a>
+            <a href="game.html?single">Play locally</a>
             <p></p>
             <a href="game.html?host">Play with a friend</a>
             <p></p>
-            Join a friend: <input type="text" id="friendID"><button onclick="joinButton()">➢</button> 
+            Join a friend: <input type="text" id="friendID"  style='font-size: 18px;' ><button onclick="joinButton()" style='font-size: 18px;'>➢</button> 
         </div>
     </div>
-    
+<div class="fakeBody">
+    <h1>HYPERCHESS</h1>
+    <div class="buttonContainer">
+        <button id="playButton" onclick="showPlayModal()" class="mainButtons">PLAY</button><button class="mainButtons">BUILD</button>
+    </div>
     
     <h2>About:</h2>
     <p class="frontPageText">

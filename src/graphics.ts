@@ -173,8 +173,8 @@ export class Visual_Board extends Board {
         const bw: number = game.board.base_w, bh:number = game.board.base_h
         super(bw, bh)
         this.game = game
-        const whole_board_pixel_l: Pixel = (WHOLE_BOARD_WIDTH  + 5) * SQ_W;
-        const whole_board_pixel_h: Pixel = (WHOLE_BOARD_HEIGHT + 1) * SQ_W;
+        const whole_board_pixel_l: Pixel = (WHOLE_BOARD_WIDTH  ) * SQ_W; //+ 5
+        const whole_board_pixel_h: Pixel = (WHOLE_BOARD_HEIGHT) * SQ_W; //+1
         this.x_offset_px = Math.floor((canvas_w - whole_board_pixel_l) / 2);
         this.y_offset_px = Math.floor((canvas_h - whole_board_pixel_h) / 2);
         this.base_board_inds = this.game.board.base_board_inds

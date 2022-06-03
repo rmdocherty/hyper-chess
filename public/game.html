@@ -4,10 +4,11 @@
     <link rel="stylesheet" href="styles.css">
     <title>Hyperchess</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.png">
-    <script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
 </head>
 
 <body>
+
+
 <script>
     var exports = {};
     function require(){};
@@ -30,7 +31,7 @@
 <div id="inviteModal" class="modal">
     <div class="modal-content">
         <p>Send this link to your friend to play:</p>
-        <input id="inviteText" readonly="readonly" size="35"></input>&nbsp&nbsp<button onclick="copy_text()">Copy</button>
+        <input id="inviteText" readonly="readonly" size="35" style='font-size: 18px;'></input>&nbsp&nbsp<button onclick="copy_text()">Copy</button>
         <p>The game will start when they join via the link.</p>
     </div>
 </div>
@@ -41,7 +42,26 @@
     </div>
 </div>
 
-<script src="./chess-bundle.js"></script>
+
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.8.2/firebase-app.js' //'https://www.gstatic.com/firebasejs/9.8.2/firebase-app.js'
+    const firebaseConfig = {
+        apiKey: "AIzaSyA1K6oQxEkWvD5b2rUP0rJCsm6Sa00PKMc",
+        authDomain: "hype-chess.firebaseapp.com",
+        projectId: "hype-chess",
+        storageBucket: "hype-chess.appspot.com",
+        messagingSenderId: "871227429033",
+        appId: "1:871227429033:web:4ce9e9b1460199472dd9b8"
+        };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+</script>
+
+
+
+<script src="chess-bundle.js"></script>
 
 </body>
 </html>
