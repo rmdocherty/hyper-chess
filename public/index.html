@@ -7,54 +7,7 @@
 </head>
 
 <body>
-    <div id="playModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            Variant:
-            <select onchange="gameSelect()" id="game_select" class="dropdown">
-                <option value="hyper">HYPER</option>
-                <option value="normal">Normal</option>
-                <option value="cylindrical">Cylindrical</option>
-                <option value="toroidal">Toroidal</option>
-                <option value="los_alamos">Los Alamos</option>
-                <option value="mobius">Mobius</option>
-                <option value="test_pair">Test Pair</option>
-                <option value="test_line">Test Line</option>
-            </select>
-            &nbsp&nbsp Time (mins):
-            <select class="dropdown">
-                <option value="0">None</option>
-                <option value="1">1</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-            </select>
-            &nbsp&nbsp Increment (s):
-            <select class="dropdown">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="30">30</option>
-            </select>
     
-            <p></p>
-            Colour: 
-            <input type="radio" id="chooseBlack" name="chooseColour" value="black">
-            <label for="chooseBlack">Black</label>
-            <input type="radio" id="chooseWhite" name="chooseColour" value="white">
-            <label for="chooseWhite">White</label>
-            <input type="radio" id="chooseRandom" name="chooseColour" value="random">
-            <label for="chooseBlack">Random</label>
-    
-            <p></p>
-            <a href="game.html?single">Play locally</a>
-            <p></p>
-            <a href="game.html?host">Play with a friend</a>
-            <p></p>
-            Join a friend: <input type="text" id="friendID"  style='font-size: 18px;' ><button onclick="joinButton()" style='font-size: 18px;'>➢</button> 
-        </div>
-    </div>
 <div class="fakeBody">
     <h1>HYPERCHESS</h1>
     <div class="buttonContainer">
@@ -78,12 +31,60 @@
         <li>Everything else (castling, <i>en passant</i>) as in regular chess</li>
     </ul>
 </div>
+<div id="playModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        Variant:
+        <select onchange="gameSelect()" id="game_select" class="dropdown">
+            <option value="hyper">HYPER</option>
+            <option value="normal">Normal</option>
+            <option value="cylindrical">Cylindrical</option>
+            <option value="toroidal">Toroidal</option>
+            <option value="los_alamos">Los Alamos</option>
+            <option value="mobius">Mobius</option>
+            <option value="test_pair">Test Pair</option>
+            <option value="test_line">Test Line</option>
+        </select>
+        &nbsp&nbsp Time (mins):
+        <select class="dropdown">
+            <option value="0">None</option>
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+        </select>
+        &nbsp&nbsp Increment (s):
+        <select class="dropdown">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="30">30</option>
+        </select>
 
+        <p></p>
+        Colour: 
+        <input type="radio" id="chooseBlack" name="chooseColour" value="black">
+        <label for="chooseBlack">Black</label>
+        <input type="radio" id="chooseWhite" name="chooseColour" value="white">
+        <label for="chooseWhite">White</label>
+        <input type="radio" id="chooseRandom" name="chooseColour" value="random">
+        <label for="chooseBlack">Random</label>
+
+        <p></p>
+        <a href="game.html?single">Play locally</a>
+        <p></p>
+        <a href="game.html?host">Play with a friend</a>
+        <p></p>
+        Join a friend: <input type="text" id="friendID"  style='font-size: 18px;' ><button onclick="joinButton()" style='font-size: 18px;'>➢</button> 
+    </div>
+</div>
 
 <script>
 function gameSelect(){
     const game = document.getElementById("game_select").value
     localStorage.setItem("selected_game", game)
+    localStorage.removeItem("current_game")
     console.log(game)
 }
 
@@ -137,6 +138,7 @@ function joinGame(friend_string){
 }
 
 function joinButton(){
+    localStorage.removeItem("current_game")
     const entered_val = document.getElementById("friendID").value
     joinGame(entered_val)
 }

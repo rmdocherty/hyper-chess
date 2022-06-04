@@ -81,7 +81,7 @@ export class Game {
     current_turn: Color
     winner: Color | boolean;
     constructor(bw: number, bh: number, colour_string: string, 
-                loop_str: string = "", fen_str: string = "") {
+                loop_str: string = "", fen_str: string = "", start_player: string ="white") {
         this.board = new Board(bw, bh, loop_str);
         this.LabelPiece = new LabelPieceMap();
         this.enpassant_flag = false;
@@ -90,7 +90,7 @@ export class Game {
         this.hyper_tracker = true;
         this.global_update = false;
         this.player = this.get_colour(colour_string)
-        this.current_turn = "white"
+        this.current_turn = start_player as Color
         this.winner = false;
         this.gen_from_fen(fen_str);
     }

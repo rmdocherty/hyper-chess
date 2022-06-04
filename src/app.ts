@@ -20,6 +20,7 @@ function join(id: string): void{
     conn = peer.connect(id)
     conn.on('data', function(data) {
         if (app_type == "guest" && typeof data === 'object') {
+            app.game_JSON = data
             app.load_from_game(app.load_game_from_JSON(data, app.game.player))
             app.vboard.reset_board()
             if (app.game.player == "white") {
@@ -34,14 +35,14 @@ function join(id: string): void{
         else if (typeof data === 'string' && data.length == 4) {
             const old_label: string = data[0] + data[1]
             const new_label: string = data[2] + data[3]
-            console.log(old_label, new_label)
+            //console.log(old_label, new_label)
             app.game.make_move_by_label(old_label, new_label)
             app.vboard.draw_board()
             app.vboard.draw_pieces(app.game.LabelPiece)
         }
     });
     conn.on('open', function() {
-        console.log('Connected to ', conn.peer);
+        //console.log('Connected to ', conn.peer);
     });
 }
 
@@ -58,7 +59,7 @@ class App {
     }
 
     initialise(app_type: AppType){
-        console.log("Game is ", app_type, " type")
+        //console.log("Game is ", app_type, " type")
         this.id = this.gen_id()
         let game: Game
         if (app_type == "single" || app_type == "host") {
@@ -79,22 +80,32 @@ class App {
         const len: number = words.length - 1
         const base_id: Array<number> = [0,0,0,0,0,0]
         const id: string = base_id.map(p => words[rand(len)]).join('')
-        console.log(id)
+        //console.log(id)
         return id
     }
 
     load_game_from_JSON(JSON_data, colour_string: string) : Game{
-        const h: number = parseInt(JSON_data['h']), w: number = parseInt(JSON_data['w'])
-        const board_str: string = JSON_data['board_str']
-        const FEN: string = JSON_data['FEN']
-        const g = new Game(w, h, colour_string, board_str, FEN)
+        const h: number = (JSON_data['h'] != null) ? parseInt(JSON_data['h']) : 8
+        const w: number = (JSON_data['w'] != null) ? parseInt(JSON_data['w']) : 8
+        const board_str: string = (JSON_data['board_str'] != null) ? JSON_data['board_str'] : ""
+        const FEN: string = (JSON_data['FEN'] != null) ? JSON_data['FEN'] : ""
+        const player: string = (JSON_data['player'] != null) ? JSON_data['player'] : "white"
+        const g = new Game(w, h, colour_string, board_str, FEN, player)
         return g
     }
 
     load_game_from_local_storage(): Game{
         const JSON_data: string = require("./games.json")
         const selected_game: string = localStorage.getItem("selected_game")
-        this.game_JSON = JSON_data[selected_game]
+        let selected_JSON: string = JSON_data[selected_game]
+        const current_game: string = JSON.parse(localStorage.getItem("current_game"))
+        
+        if ((current_game != null) && (current_game["board_str"] == selected_JSON["board_str"]) ) {
+            this.game_JSON = current_game
+        }
+        else {
+            this.game_JSON = selected_JSON
+        }
         const colour_string: string = localStorage.getItem("colour")
         const g: Game = this.load_game_from_JSON(this.game_JSON, colour_string)
         return g
@@ -104,6 +115,14 @@ class App {
         this.game = game
         this.vboard = new Visual_Board(this.game)
         this.vboard.make_visual_board()
+    }
+
+    save_game_to_local_storage() {
+        const FEN: string = this.game.get_fen_from_game()
+        console.log(FEN)
+        this.game_JSON["FEN"] = FEN
+        this.game_JSON["player"] = this.game.current_turn
+        localStorage.setItem("current_game", JSON.stringify(this.game_JSON))
     }
 
     draw() {
@@ -117,6 +136,7 @@ class App {
 
     make_move_by_label(old_sq_label: string, new_sq_label: string): void{
         this.vboard.make_move_by_label(old_sq_label, new_sq_label)
+        this.save_game_to_local_storage() //this doesn't work for client games - they don't have a game JSON!
     }
 
     start_networking(){
@@ -148,7 +168,7 @@ class App {
                 conn.on('data', function(data) {
                     const old_label: string = data[0] + data[1]
                     const new_label: string = data[2] + data[3]
-                    console.log(old_label, new_label)
+                    //console.log(old_label, new_label)
                     game.make_move_by_label(old_label, new_label)
                     vboard.draw_board()
                     vboard.draw_pieces(game.LabelPiece)
@@ -250,6 +270,7 @@ class App {
             win_text.innerHTML = winner
             const win_modal: HTMLElement = document.getElementById("winModal")
             win_modal.style.display = "block"
+            localStorage.removeItem("current_game")
         }
     }
 }
