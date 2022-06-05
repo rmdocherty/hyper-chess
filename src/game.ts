@@ -148,6 +148,13 @@ export class Game {
         this.gen_from_generic_fen(hyper_fen_str, x, y);
     }
 
+    add_piece(piece_char: string, color: Color, x: number, y: number){
+        const piece_type = string_to_piece[piece_char];
+        const piece: Piece = new piece_type(color);
+        const label: string = x_y_to_label(x, y);
+        this.LabelPiece.set(label, piece);
+    }
+
     gen_from_generic_fen(fen_str: string, x0: number, y0: number): void {
         let x: number = x0;
         let y: number = y0;
@@ -163,10 +170,7 @@ export class Game {
                 x = x0;
             }
             else if (['r', 'p', 'q', 'b', 'k', 'n'].includes(lower_case_str)) {
-                const piece_type = string_to_piece[lower_case_str];
-                const piece: Piece = new piece_type(color);
-                const label: string = x_y_to_label(x, y);
-                this.LabelPiece.set(label, piece);
+                this.add_piece(lower_case_str, color, x, y)
                 x += 1
             }
             else {

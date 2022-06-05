@@ -1,4 +1,4 @@
-import { Forbidden, Square, Label, Color } from './squares'
+import { Forbidden, Square, Label, Color, Point } from './squares'
 import { Piece } from './pieces'
 import { Game } from './game'
 import { Visual_Board, Pixel, canvas} from './graphics'
@@ -62,7 +62,7 @@ class App {
         //console.log("Game is ", app_type, " type")
         this.id = this.gen_id()
         let game: Game
-        if (app_type == "single" || app_type == "host") {
+        if (app_type == "single" || app_type == "host" || app_type == "build") {
             game = this.load_game_from_local_storage()
             this.load_from_game(game)
         }
@@ -119,14 +119,20 @@ class App {
 
     save_game_to_local_storage() {
         const FEN: string = this.game.get_fen_from_game()
-        console.log(FEN)
         this.game_JSON["FEN"] = FEN
         this.game_JSON["player"] = this.game.current_turn
         localStorage.setItem("current_game", JSON.stringify(this.game_JSON))
     }
 
     draw() {
-        this.vboard.draw_board()
+        if (app_type == "build") {
+            this.vboard.draw_board("grid") //draw twice to draw over grid with board.
+            this.vboard.draw_board("default")
+        }
+        else {
+            this.vboard.draw_board()
+        }
+        
         this.vboard.draw_pieces(this.game.LabelPiece)
     }
 
@@ -188,7 +194,7 @@ class App {
         })
     }
     
-    check_click(x: Pixel, y: Pixel): void{
+    handle_click_game(x: Pixel, y: Pixel): void{
         const vboard: Visual_Board = this.vboard
         const g: Game = vboard.game
         let on_board: boolean = false
@@ -246,8 +252,9 @@ class App {
         }
         
         if (g.global_update) { //problem here: after promotion queen img loads too slow to be displayed
-            vboard.draw_board()
-            vboard.draw_pieces(g.LabelPiece)
+            //vboard.draw_board()
+            //vboard.draw_pieces(g.LabelPiece)
+            this.draw()
             g.global_update = false
         }
         
@@ -273,6 +280,33 @@ class App {
             localStorage.removeItem("current_game")
         }
     }
+
+    handle_click_build(cx: Pixel, cy: Pixel): void{
+        const vboard: Visual_Board = this.vboard
+        const g: Game = vboard.game
+        let on_board: boolean = false
+        //console.log("test")
+        for (let row of vboard){
+            for (let v_sq of row) {
+                let min_p = v_sq.bbox[0]
+                let max_p = v_sq.bbox[3]
+                if ((cx < max_p[0] && cx > min_p[0]) && (cy < max_p[1] && cy > min_p[1])) {
+                    const x: number = v_sq.real_sq.x
+                    const y: number = v_sq.real_sq.y
+                    console.log(x, y)
+                    if (v_sq.real_sq instanceof Forbidden) {
+                        console.log('clickng forbidden')
+                        const new_sq: Square = new Square(new Point(x,y))
+                        g.board[y][x] = new_sq
+                        
+                        // FORBIDDEN SQUARES OFFSET BY 1 FROM REAL SQUARES and need to flip if white!
+                        vboard.add_square(x, y)
+                        this.draw()
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -290,5 +324,11 @@ canvas.addEventListener('mousedown', e => {
     const x: Pixel = e.clientX - rect.left
     const y: Pixel = e.clientY - rect.top
 
-    app.check_click(x, y)
+    if (app_type == "build") {
+        app.handle_click_build(x, y)
+    }
+    else {
+        app.handle_click_game(x, y)
+    }
+    
 })

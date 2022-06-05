@@ -11,7 +11,7 @@
 <div class="fakeBody">
     <h1>HYPERCHESS</h1>
     <div class="buttonContainer">
-        <button id="playButton" onclick="showPlayModal()" class="mainButtons">PLAY</button><button class="mainButtons">BUILD</button>
+        <button id="playButton" class="mainButtons">PLAY</button><button id="buildButton" class="mainButtons">BUILD</button>
     </div>
     
     <h2>About:</h2>
@@ -80,6 +80,31 @@
     </div>
 </div>
 
+<div id="buildModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        Default variants: 
+        <select onchange="gameSelect()" id="game_select" class="dropdown">
+            <option value="hyper">HYPER</option>
+            <option value="normal">Normal</option>
+            <option value="cylindrical">Cylindrical</option>
+            <option value="toroidal">Toroidal</option>
+            <option value="los_alamos">Los Alamos</option>
+            <option value="mobius">Mobius</option>
+            <option value="test_pair">Test Pair</option>
+            <option value="test_line">Test Line</option>
+        </select>
+        <p></p>
+        Width: <input type="number" id="width" style='font-size: 18px; width: 50px;'> &nbsp&nbsp Height: <input type="number" id="height" style='font-size: 18px;; width: 50px;'>
+        <p></p>
+        Board: <input type="text" id="board_str" style='font-size: 18px;'>
+        <p></p>
+        FEN: &nbsp&nbsp<input type="text" id="fen" style='font-size: 18px;'>
+        <p></p>
+        <a href="game.html?build">Build!</a>
+    </div>
+</div>
+
 <script>
 function gameSelect(){
     const game = document.getElementById("game_select").value
@@ -89,14 +114,27 @@ function gameSelect(){
 }
 
 let modal = document.getElementById("playModal");
+let play_button = document.getElementById("playButton")
 let span = document.getElementsByClassName("close")[0];
 
-function showPlayModal() {
+play_button.onclick = function() {
     modal.style.display = "block";
 }
 
 span.onclick = function() {
     modal.style.display = "none";
+}
+
+let build_modal = document.getElementById("buildModal");
+let build_button = document.getElementById("buildButton")
+let build_span = document.getElementsByClassName("close")[0];
+
+build_button.onclick = function() {
+    build_modal.style.display = "block";
+}
+
+build_span.onclick = function() {
+    build_modal.style.display = "none";
 }
 
 const radioButtons = document.getElementsByName("chooseColour")
@@ -108,6 +146,10 @@ radioButtons.forEach(element => {
 window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";
+        
+    } 
+    else if (event.target == build_modal) {
+        build_modal.style.display = "none";
     }
 }
 
@@ -143,6 +185,9 @@ function joinButton(){
     joinGame(entered_val)
 }
 
+function buildButton(){
+    window.location.href = "game.html?build"
+}
 
 </script>
 

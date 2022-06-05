@@ -58,6 +58,11 @@ class Visual_Square {
     }
 
     draw(mode: string="default"): void {
+        mode = (mode == "grid") ? "default" : mode
+        
+        //ctx.fillStyle = "white"
+        //ctx.fillRect(this.bbox[0][0], this.bbox[0][1], SQ_W, SQ_W)
+
         let fill_colour: string = colours[this.real_sq.color]    
         if (mode == "active" || mode == "inactive"){
             fill_colour = colours[this.real_sq.color + "_" + mode]
@@ -152,8 +157,15 @@ class Visual_Square_Forbidden extends Visual_Square {
         super(real_square, points, midpoint, type);
     }
 
-    draw(mode = "default"){
-        return 0;
+    draw(mode: string = "default"){
+        if (mode == "grid") {
+            let p: Array<number> = this.points[0]
+            ctx.strokeStyle = colours["black_inactive"]
+            ctx.strokeRect(p[0], p[1], SQ_W, SQ_W)
+        }
+        else {
+            return 0
+        }
     }
 }
 
@@ -189,7 +201,10 @@ export class Visual_Board extends Board {
     }
 
     background_obj(x: number, y: number): any {
-        const sq = new Visual_Square_Forbidden(this.game.board[y][x], [0, 0], [0, 0], "none")
+        const [blx, bly] = this.point_to_pixel(new Point(x, y))
+        const points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
+        const midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
+        const sq = new Visual_Square_Forbidden(this.game.board[y][x], points, midpoint, "square")
         return sq
     }
 
@@ -283,13 +298,13 @@ export class Visual_Board extends Board {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    draw_board(): void{
+    draw_board(mode: string="default"): void{
         for (let row of this) {
             for (let g_sq of row) {
                 if (g_sq.type == "curved"){
-                    g_sq.draw("default")
+                    g_sq.draw(mode)
                 }
-                g_sq.draw("default")
+                g_sq.draw(mode)
             }
         }
     }
@@ -319,6 +334,11 @@ export class Visual_Board extends Board {
             const v_sq: Visual_Square = this[point.y][point.x];
             v_sq.draw_sprite(piece.img);
         }
+    }
+
+    draw(): void {
+        this.draw_board()
+        this.draw_pieces(this.game.LabelPiece)
     }
 
     compute_anchor(loop: Array<Point>, align: Align): any {
