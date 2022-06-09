@@ -13,6 +13,7 @@ type EndChar = "s" | "l" | "c" | "a" | "n" | "f"
 type LoopEnds = Hyper | Link | Arch | Circle;
 type LoopType = "loop" | "pair" | "single"
 export type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
+export type Squares = Square | Forbidden | Hyper | Line | Link | Arch | Circle
 
 const CHAR_TO_LOOP = {"s": Line, "l": Link, "c": Circle, "a": Arch, "n": Square, "f": Forbidden, "h": Hyper};
 //NB THIS IS DEIFNED LEFT TO RIGHT BOTTOM TO TOP I.E ASSUMES START AND END POINTS DEFINED THAT WAY

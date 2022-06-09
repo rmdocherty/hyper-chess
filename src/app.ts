@@ -1,10 +1,12 @@
 import { Forbidden, Square, Label, Color, Point } from './squares'
-import { Piece } from './pieces'
-import { Game } from './game'
-import { Visual_Board, Pixel, canvas} from './graphics'
+import { Board, Squares } from './board'
+import { PieceChar, Piece } from './pieces'
+import { string_to_piece, Game } from './game'
+import { Visual_Board, Pixel, canvas, SQ_W} from './graphics'
 import { peerjs } from './peerJS.js'
 
 type AppType = "single" | "host" | "guest" | "build"
+type BuildMode = "square" | "loop" | "pair" | "piece" | "delete"
 
 const app_type = window.location.href.split('?')[1] as AppType
 
@@ -54,8 +56,10 @@ class App {
     vboard: Visual_Board
     friend_id: string
     id: string
+    place_stack: Array<Square>
     constructor(){
         this.initialise(app_type)
+        this.place_stack = []
     }
 
     initialise(app_type: AppType){
@@ -279,6 +283,79 @@ class App {
             win_modal.style.display = "block"
             localStorage.removeItem("current_game")
         }
+        if ((x < 2*SQ_W) && (y < 2*SQ_W)) {
+            openNav()
+        }
+    }
+
+    map_build_mode_function(sx: number, sy: number, mode: BuildMode): void {
+        const elem: HTMLInputElement = document.getElementById("build_mode_select") as HTMLInputElement
+        const build_mode: BuildMode = elem.value as BuildMode
+        switch (build_mode) {
+            case "square":
+                this.place_single_square(sx, sy, Square)
+                break;
+            case "loop":
+                //this.place_loop(sx, sy)
+                break;
+            case "pair":
+                //this.place_pair(sx, sy)
+                break;
+            case "piece":
+                this.place_piece(sx, sy)
+                break;
+            case "delete":
+                this.delete(sx, sy)
+                break;  
+        } 
+    }
+
+    place_single_square(sx: number, sy: number, sq_type: any): void {
+        const board: Board = this.game.board
+        if (board[sy][sx] instanceof Forbidden) {
+            const new_sq: Square = new sq_type(new Point(sx,sy))
+            board[sy][sx] = new_sq
+            this.vboard.add_square(sx, sy)
+        }
+        else {
+            return
+        }
+        
+    }
+
+    delete(sx: number, sy: number): void {
+        const old_sq: Square = this.game.board[sy][sx]
+        const game: Game = this.game
+        if (game.LabelPiece.has(old_sq.label)) {
+            game.LabelPiece.delete(old_sq.label)
+        }
+        else {
+            const new_sq: Square = new Forbidden(new Point(sx,sy))
+            game.board[sy][sx] = new_sq
+            this.vboard[sy][sx] = this.vboard.background_obj(sx, sy)
+        }
+    }
+
+    place_piece(sx: number, sy: number): void {
+        const old_sq: Square = this.game.board[sy][sx]
+        const game: Game = this.game
+        if (game.LabelPiece.has(old_sq.label)) {
+            return
+        }
+        else if (old_sq instanceof Forbidden){
+            return
+        }
+        else {
+            const piece_char: PieceChar = (document.getElementById("piece_type_select") as HTMLInputElement).value as PieceChar
+            const color: Color = (document.getElementById("piece_col_select") as HTMLInputElement).value as Color
+            game.add_piece(piece_char, color, sx, sy)
+        }
+    }
+
+    place_loop(sx: number, sy: number) {
+        //plan: if place stack full map it to a loop desc (can do this generally as pair doesn't care about align)
+        // then pass loop desc to a generic add function which adds square to game board and visual board
+        // need some way to map x, y to 
     }
 
     handle_click_build(cx: Pixel, cy: Pixel): void{
@@ -286,6 +363,7 @@ class App {
         const g: Game = vboard.game
         let on_board: boolean = false
         //console.log("test")
+        console.log(cx, cy)
         for (let row of vboard){
             for (let v_sq of row) {
                 let min_p = v_sq.bbox[0]
@@ -294,18 +372,32 @@ class App {
                     const x: number = v_sq.real_sq.x
                     const y: number = v_sq.real_sq.y
                     console.log(x, y)
-                    if (v_sq.real_sq instanceof Forbidden) {
-                        console.log('clickng forbidden')
-                        const new_sq: Square = new Square(new Point(x,y))
-                        g.board[y][x] = new_sq
-                        
-                        // FORBIDDEN SQUARES OFFSET BY 1 FROM REAL SQUARES and need to flip if white!
-                        vboard.add_square(x, y)
-                        this.draw()
-                    }
+                    const build_mode: BuildMode = (document.getElementById("build_mode_select") as HTMLInputElement).value as BuildMode
+                    console.log(build_mode)
+                    this.map_build_mode_function(x, y, build_mode)
+                    this.draw()
                 }
             }
         }
+        if ((cx < 2*SQ_W) && (cy < 2*SQ_W)) {
+            openNav()
+        }
+    }
+}
+
+function openNav() {
+    document.getElementById("mySidenav").style.width = "200px";
+}
+
+document.getElementById("closebtn").onclick = function() {
+    document.getElementById("mySidenav").style.width = "0px";
+}
+
+const builder_dropdowns = document.getElementsByClassName("builder")
+for (let i=0; i<builder_dropdowns.length; i++) {
+    const elem: HTMLElement = builder_dropdowns[i] as HTMLElement
+    if (app_type != "build") {
+        elem.style.display = "none"
     }
 }
 

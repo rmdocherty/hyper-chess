@@ -14,7 +14,7 @@ import { Piece, Pawn, Rook, Bishop, Knight, Queen, King } from "./pieces";
 // FEN
 const base_game_FEN: string = "FEN:rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
-const string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
+export const string_to_piece = {"r": Rook, "n": Knight, "q": Queen, "p": Pawn, "k": King, "b": Bishop};
 
 type Move = Square;
 

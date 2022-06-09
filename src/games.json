@@ -32,7 +32,7 @@
     "test_pair" : {
         "w": "8", 
         "h" : "8",
-        "board_str" : "xadjdg%yhgdgm%xnaa",
+        "board_str" : "xadjdg%xhgdgm%xnaa",
         "FEN" : ""
     },
     "hyper_better" : {

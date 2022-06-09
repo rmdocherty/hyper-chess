@@ -1,5 +1,7 @@
 import {Color, Point, Vector} from './squares'
 
+export type PieceChar = "r" | "n" | "b" | "q" | "k" | "p" | "R" | "N" | "B" | "Q" | "K" | "P"
+
 const rook_like: Array<Vector> = [
     new Point(1, 0),
     new Point(-1, 0), 
@@ -17,7 +19,7 @@ export class Piece {
     move_vectors: Array<Vector>;
     move_continuous: boolean;
     color: Color;
-    piece_char: string;
+    piece_char: PieceChar;
     sprite_str: string;
     img: HTMLImageElement;
     constructor(color: Color){

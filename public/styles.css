@@ -7,6 +7,9 @@ h1 {
   
 }
 
+/*=======================
+     MODAL STUFF
+=======================*/
 
 .modal {
   display: none; /* Hidden by default */
@@ -53,7 +56,15 @@ h1 {
   font-size: 16px;
 }
 
-/* BODY STUFF: EVERYTHING HERE INHERITS FROM FAKEBODY*/
+.builder {
+  font-size: 16px;
+}
+
+/*=======================
+     BODY STUFF
+=======================*/
+
+
 .fakeBody{
   margin: 40px auto;
   max-width: 650px;
@@ -88,6 +99,10 @@ h1 {
     padding: 10px;
   }
 
+/*=======================
+     BOARD STUFF
+=======================*/
+
 .gameboard {
     width: 100%;
     height: 100%;
@@ -99,3 +114,44 @@ h1 {
 }
 
 
+/*=======================
+     SIDENAV STUFF
+=======================*/
+
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #ededed;
+  overflow-x: hidden; 
+  transition: 0.3s;
+}
+
+.sidenav div {
+  /*padding: 10px 16px 10px 32px;*/
+  padding: 12% 0% 0% 12%; /*12% 12% 30%*/
+  text-decoration: none;
+  font-size: 20px;
+  color: #4f4f4f;
+  display: block;
+  transition: 0.3s;
+  width:100%;
+}
+
+.sidenav div:hover {
+  color: "black";
+  cursor: pointer;
+}
+
+/*.sidenav div:active {
+  background-color: #e3e3e3;  
+}*/
+
+.sidenav .closebtn {
+  background-color: transparent;
+  border: none; 
+  padding: 16% 16% 16% 32%;
+}

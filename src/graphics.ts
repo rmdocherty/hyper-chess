@@ -11,7 +11,7 @@ export type Pixel = number;
 let arch_pair_count: number = 1;
 let line_pair_count: number = 1;
 
-const classic = {"bg": "#ebe5c0", "black": "#cab175", "white": "#e9daB5", 
+const classic = {"bg": "#FFFFFF", "black": "#cab175", "white": "#e9daB5", 
                 "black_active": "#67b553", "white_active": "#93e37f", "active": "#84a360", 
                 "black_inactive": "#b55353", "white_inactive": "#de6666",
                 "menu": "#a52a2a", "circle": "#3eb053", "hyper_light": "#fce8b1",
@@ -27,7 +27,7 @@ canvas.height = canvas_h;
 canvas.width = canvas_w;
 
 
-const SQ_W: Pixel = 50;
+export const SQ_W: Pixel = 50;
 
 class Visual_Square {
     real_sq: Square;
@@ -160,6 +160,8 @@ class Visual_Square_Forbidden extends Visual_Square {
     draw(mode: string = "default"){
         if (mode == "grid") {
             let p: Array<number> = this.points[0]
+            ctx.fillStyle = colours["bg"]
+            ctx.fillRect(p[0], p[1], SQ_W, SQ_W)
             ctx.strokeStyle = colours["black_inactive"]
             ctx.strokeRect(p[0], p[1], SQ_W, SQ_W)
         }
