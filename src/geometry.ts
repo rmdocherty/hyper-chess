@@ -71,3 +71,22 @@ export function get_coords(angles: Array<Array<number>>, radii: Array<number>,
     
     return [curve_points, midpoints];
 }
+
+export function map_points_to_align(points: Array<Point>, base_board_indices: Array<number>): Align {
+    const [lx, by, rx, ty]: Array<number> = base_board_indices;
+    const [p0, p1]: Array<Point> = points
+    const mx: number = (rx - lx) / 2
+    const my: number = (ty - by) / 2
+    if (p0.x == p1.x && p0.x < mx) {
+        return "x"
+    }
+    else if (p0.x == p1.x && p0.x > mx) {
+        return "y"
+    }
+    else if (p0.y == p1.y && p0.y < my) {
+        return "b"
+    }
+    else if (p0.y == p1.y && p0.y > my) {
+        return "t"
+    }
+}

@@ -9,9 +9,9 @@ export var NORM_BOARD_HEIGHT: number = 8;
 type Row = Array<Square>;
 type Loop = Array<Square>;
 
-type EndChar = "s" | "l" | "c" | "a" | "n" | "f"
+export type EndChar = "s" | "l" | "c" | "a" | "n" | "f"
 type LoopEnds = Hyper | Link | Arch | Circle;
-type LoopType = "loop" | "pair" | "single"
+export type LoopType = "loop" | "pair" | "single"
 export type LoopDesc = [Align, LoopType, EndChar, Array<Point>];
 export type Squares = Square | Forbidden | Hyper | Line | Link | Arch | Circle
 
@@ -25,11 +25,13 @@ export class Board extends Array {
     base_h: number;
     base_board_inds: Array<number>;
     loops: Array<LoopDesc>;
+    board_str: string
 
     constructor(bw: number, bh: number, loop_str: string="") {
         super();
         this.base_w = bw;
         this.base_h = bh;
+        this.board_str = loop_str
 
         const left_x_ind: number = Math.floor((WHOLE_BOARD_WIDTH - bw) / 2);
         const right_x_ind: number = left_x_ind + bw - 1;

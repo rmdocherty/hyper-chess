@@ -206,6 +206,11 @@ export class Game {
         return fen;
     }
 
+    export_game(): Object{
+        const board: Board = this.board
+        return {"w": String(board.base_w), "h": String(board.base_h), "board_str": board.board_str, "FEN": this.get_fen_from_game()}
+    }
+
     check_if_sq_empty(chk_sq: Square, piece: Piece): boolean{
         // Check if square occupied by anything
         let label: string;

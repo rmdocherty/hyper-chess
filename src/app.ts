@@ -1,7 +1,8 @@
-import { Forbidden, Square, Label, Color, Point } from './squares'
-import { Board, Squares } from './board'
+import { Forbidden, Square, Label, Color, Point, Align } from './squares'
+import { Board, Squares, EndChar, LoopType } from './board'
 import { PieceChar, Piece } from './pieces'
 import { string_to_piece, Game } from './game'
+import * as geom from './geometry'
 import { Visual_Board, Pixel, canvas, SQ_W} from './graphics'
 import { peerjs } from './peerJS.js'
 
@@ -56,7 +57,7 @@ class App {
     vboard: Visual_Board
     friend_id: string
     id: string
-    place_stack: Array<Square>
+    place_stack: Array<Point>
     constructor(){
         this.initialise(app_type)
         this.place_stack = []
@@ -126,6 +127,23 @@ class App {
         this.game_JSON["FEN"] = FEN
         this.game_JSON["player"] = this.game.current_turn
         localStorage.setItem("current_game", JSON.stringify(this.game_JSON))
+    }
+
+    save_board_to_local_storage(board_name: string) {
+        let user_games: any = (localStorage.getItem("user_games") !== null) ? localStorage.getItem("user_games") : null
+        const user_game: object = this.game.export_game()
+        if (user_games != null) {
+            user_games = JSON.parse(user_games)
+            user_games[board_name]  = user_game
+        }
+        else {
+            user_games = {}
+            user_games[board_name] = user_game
+        }
+        console.log(JSON.stringify(user_game))
+        console.log(user_games)
+        console.log(JSON.stringify(user_games))
+        localStorage.setItem("user_games", JSON.stringify(user_games))
     }
 
     draw() {
@@ -293,18 +311,21 @@ class App {
         const build_mode: BuildMode = elem.value as BuildMode
         switch (build_mode) {
             case "square":
+                this.place_stack = []
                 this.place_single_square(sx, sy, Square)
                 break;
             case "loop":
-                //this.place_loop(sx, sy)
+                this.place_loop(sx, sy, "loop")
                 break;
             case "pair":
-                //this.place_pair(sx, sy)
+                this.place_loop(sx, sy, "pair")
                 break;
             case "piece":
+                this.place_stack = []
                 this.place_piece(sx, sy)
                 break;
             case "delete":
+                this.place_stack = []
                 this.delete(sx, sy)
                 break;  
         } 
@@ -316,6 +337,7 @@ class App {
             const new_sq: Square = new sq_type(new Point(sx,sy))
             board[sy][sx] = new_sq
             this.vboard.add_square(sx, sy)
+            board.board_str += "xn"+new_sq.label
         }
         else {
             return
@@ -333,6 +355,7 @@ class App {
             const new_sq: Square = new Forbidden(new Point(sx,sy))
             game.board[sy][sx] = new_sq
             this.vboard[sy][sx] = this.vboard.background_obj(sx, sy)
+            game.board.board_str += "xf"+new_sq.label
         }
     }
 
@@ -352,10 +375,52 @@ class App {
         }
     }
 
-    place_loop(sx: number, sy: number) {
-        //plan: if place stack full map it to a loop desc (can do this generally as pair doesn't care about align)
-        // then pass loop desc to a generic add function which adds square to game board and visual board
-        // need some way to map x, y to 
+    place_loop(sx: number, sy: number, mode: string) {
+        if (this.place_stack.length == 0) {
+            this.place_stack.push(new Point(sx, sy))
+        }
+        else {
+            this.place_stack.push(new Point(sx, sy))
+            this.add_loop(mode)
+            this.draw()
+            this.place_stack = []
+        }
+    }
+
+    put_points_in_normal_order(points: Array<Point>){
+        const p0: Point = points[0]
+        const p1: Point = points[1]
+        if (p1.x < p0.x && p1.y < p0.y) {
+            return [p1, p0]
+        }
+        else if (p1.x == p0.x && p1.y < p0.y) {
+            return [p1, p0]
+        }
+        else if (p1.x < p0.x && p1.y == p0.y) {
+            return [p1, p0]
+        }
+        else {
+            return points
+        }
+    }
+
+    get_loop_str_from_placed(mode:string): string{
+        const points: Array<Point> = this.put_points_in_normal_order(this.place_stack)
+        let end_char: string = (document.getElementById("loop_type_select") as HTMLInputElement).value as EndChar
+        const loop_type: LoopType = (document.getElementById("build_mode_select") as HTMLInputElement).value as LoopType
+        end_char = (loop_type == "loop") ? end_char.toUpperCase() :  end_char.toLowerCase()
+        const align: Align = geom.map_points_to_align(points, this.game.board.base_board_inds)
+        const sq_1_label: Label = this.place_stack[0].label
+        const sq_2_label: Label = this.place_stack[1].label
+        return align + end_char + sq_1_label + sq_2_label
+    }
+
+    add_loop(mode: string) {
+        const loop_str: string = this.get_loop_str_from_placed(mode)
+        console.log(loop_str)
+        this.game.board.make_loop(loop_str)
+        this.game.board.board_str += loop_str
+        this.vboard.add_loops()
     }
 
     handle_click_build(cx: Pixel, cy: Pixel): void{
@@ -391,6 +456,11 @@ function openNav() {
 
 document.getElementById("closebtn").onclick = function() {
     document.getElementById("mySidenav").style.width = "0px";
+}
+
+document.getElementById("savebtn").onclick = function() {
+    let name = prompt("Name to save board as?")
+    app.save_board_to_local_storage(name)
 }
 
 const builder_dropdowns = document.getElementsByClassName("builder")

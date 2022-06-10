@@ -26,6 +26,12 @@ const ctx = canvas.getContext("2d");
 canvas.height = canvas_h;
 canvas.width = canvas_w;
 
+const sprite_str = "assets/cog.png"
+const settings_img = new Image(0, 0);
+settings_img.src = sprite_str;
+settings_img.className = "hiddenImg";
+document.body.appendChild(settings_img);
+
 
 export const SQ_W: Pixel = 50;
 
@@ -296,6 +302,23 @@ export class Visual_Board extends Board {
         this.add_squares(rest_of_points)
     }
 
+    add_loops(): void {
+        for (let l of this.game.board.loops){
+            if (l[2] == 'a' && l[1] == "loop") {
+                this.add_loop_squares(l)
+            }
+            else if (l[2] == 'l' && l[1] == "loop") {
+                this.add_line_squares(l)
+            }
+            else if (l[1] == "pair") {
+                this.add_pair(l)
+            }
+            else {
+                this.add_squares(l[3])
+            }
+        }
+    }
+
     reset_board(): void{
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
@@ -309,6 +332,7 @@ export class Visual_Board extends Board {
                 g_sq.draw(mode)
             }
         }
+        ctx.drawImage(settings_img, 0, 0, 48, 48, 0, 0, SQ_W, SQ_W)
     }
 
     draw_vector(vector: Array<Square>, mode:string="default"): void {
@@ -362,20 +386,7 @@ export class Visual_Board extends Board {
     make_visual_board() {
         this.fill_background()
         this.fill_base_board(this.base_board_inds)
-        for (let l of this.game.board.loops){
-            if (l[2] == 'a' && l[1] == "loop") {
-                this.add_loop_squares(l)
-            }
-            else if (l[2] == 'l' && l[1] == "loop") {
-                this.add_line_squares(l)
-            }
-            else if (l[1] == "pair") {
-                this.add_pair(l)
-            }
-            else {
-                this.add_squares(l[3])
-            }
-        }  
+        this.add_loops()
     }
 
     make_move_by_label(old_sq_label: string, new_sq_label: string): void{
