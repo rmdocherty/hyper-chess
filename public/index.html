@@ -84,7 +84,7 @@
     <div class="modal-content">
         <span class="close">&times;</span>
         Default variants: 
-        <select onchange="gameSelect()" id="game_select" class="dropdown">
+        <select onchange="buildSelect()" id="build_select" class="dropdown">
             <option value="hyper">HYPER</option>
             <option value="normal">Normal</option>
             <option value="cylindrical">Cylindrical</option>
@@ -94,6 +94,9 @@
             <option value="test_pair">Test Pair</option>
             <option value="test_line">Test Line</option>
         </select>
+        <!--
+
+        
         <p></p>
         Width: <input type="number" id="width" style='font-size: 18px; width: 50px;'> &nbsp&nbsp Height: <input type="number" id="height" style='font-size: 18px;; width: 50px;'>
         <p></p>
@@ -101,6 +104,7 @@
         <p></p>
         FEN: &nbsp&nbsp<input type="text" id="fen" style='font-size: 18px;'>
         <p></p>
+        -->
         <a href="game.html?build">Build!</a>
     </div>
 </div>
@@ -108,12 +112,36 @@
 <script>
 function gameSelect(){
     const game = document.getElementById("game_select").value
+    //localStorage.removeItem("selected_game")
+    localStorage.setItem("selected_game", game)
+    localStorage.removeItem("current_game")
+    console.log(game)
+}
+function buildSelect(){
+    const game = document.getElementById("build_select").value
+    //localStorage.removeItem("selected_game")
     localStorage.setItem("selected_game", game)
     localStorage.removeItem("current_game")
     console.log(game)
 }
 
 function add_games_to_select(){
+    let user_games = localStorage.getItem("user_games")
+    console.log(user_games)
+    if (user_games != null) {
+        user_games = JSON.parse(user_games)
+        for (let [keys, _] of Object.entries(user_games)) {
+            console.log(keys, _)
+            for (let selector of ["game_select", "build_select"]) {
+                const option = document.createElement("option")
+                option.value = keys
+                option.innerHTML = keys
+                document.getElementById(selector).appendChild(option)
+            }
+            
+            //console.log(boards)
+        }
+    }
 }
 
 let modal = document.getElementById("playModal");
@@ -173,8 +201,8 @@ window.onload = function(){
     else {
         localStorage.setItem("colour", color)
     }
-    
     localStorage.setItem("selected_game", "hyper")
+    add_games_to_select()
 }
 
 function joinGame(friend_string){

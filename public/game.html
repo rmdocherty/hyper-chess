@@ -51,7 +51,7 @@
         Palette:
         <select onchange="paletteSelect()" id="palette_select" class="dropdown">
             <option value="classic">Classic</option>
-            <option value="hyper">Hyper</option>
+            <option value="vapor">Vapour</option>
             <option value="mono">Mono</option>
         </select>
     </div>
@@ -66,14 +66,14 @@
             <option value="delete">Delete</option>
         </select>
     </div>
-    <div class=builder>
+    <div class=builder id="loop_type_div", style="display: none">
         Loop type: 
         <select onchange="loopTypeSelect()" id="loop_type_select" class="builder">
             <option value="a">Arch</option>
             <option value="l">Line</option>
         </select>
     </div>
-    <div class=builder>
+    <div class=builder id="piece_type_div", style="display: none">
         Piece: 
         <select id="piece_type_select" class="builder">
             <option value="p">Pawn</option>
@@ -84,7 +84,7 @@
             <option value="k">King</option>
         </select>
     </div>
-    <div class=builder>
+    <div class=builder id="piece_col_div", style="display: none">
         Colour: 
         <select id="piece_col_select" class="builder">
             <option value="white">White</option>
@@ -93,6 +93,9 @@
     </div>
     <div class=builder>
         <button style='font-size: 18px;' id="savebtn">Save</button>
+    </div>
+    <div class=builder>
+        <button style='font-size: 18px;' id="downloadbtn">Download</button>
     </div>
     <div>
         <button onclick="quit()" style='font-size: 18px;'>Quit</button>

@@ -12,17 +12,31 @@ let arch_pair_count: number = 1;
 let line_pair_count: number = 1;
 
 const classic = {"bg": "#FFFFFF", "black": "#cab175", "white": "#e9daB5", 
-                "black_active": "#67b553", "white_active": "#93e37f", "active": "#84a360", 
-                "black_inactive": "#b55353", "white_inactive": "#de6666",
-                "menu": "#a52a2a", "circle": "#3eb053", "hyper_light": "#fce8b1",
-                "hyper_dark": "#80765d"}
+                "black_active": "#67b553", "white_active": "#93e37f", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666"} 
+//"menu": "#a52a2a", "circle": "#3eb053", "hyper_light": "#fce8b1","hyper_dark": "#80765d""active": "#84a360"
 
-let colours = classic;
+const mono = {"bg": "#FFFFFF", "black": "#363636", "white": "#e6e6e6", 
+                "black_active": "#67b553", "white_active": "#93e37f", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666"} 
+
+const vapor = {"bg": "#FFFFFF", "black": "#e89be5", "white": "#9bd4e8", 
+                "black_active": "#67b553", "white_active": "#93e37f", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666"}                
+
+export const color_themes = {"classic": classic, "mono": mono, "vapor": vapor}
+
+
+export let colours = classic;
+
+export function switch_colour(name: string): void {
+    colours = color_themes[name]
+}
 
 export const canvas = document.getElementById("gameBoard") as HTMLCanvasElement;
 
 const canvas_w: Pixel = window.innerWidth, canvas_h: Pixel = window.innerHeight;
-const ctx = canvas.getContext("2d");
+export const ctx = canvas.getContext("2d");
 canvas.height = canvas_h;
 canvas.width = canvas_w;
 
@@ -155,6 +169,13 @@ class Visual_Square {
         this.bbox = this.remap_bbox()
         this.midpoint = [this.midpoint[0], flip_y-this.midpoint[1]]
     }
+
+    fill(colour_str: string) : void {
+        ctx.fillStyle = colours[colour_str]
+        const p: Array<number> = this.points[0]
+        console.log("filling at ", p[0], p[1])
+        ctx.fillRect(p[0], p[1], SQ_W, SQ_W)
+    }
 }
 
 
@@ -164,9 +185,9 @@ class Visual_Square_Forbidden extends Visual_Square {
     }
 
     draw(mode: string = "default"){
+        const p: Array<number> = this.points[0]
+        ctx.fillStyle = colours["bg"]
         if (mode == "grid") {
-            let p: Array<number> = this.points[0]
-            ctx.fillStyle = colours["bg"]
             ctx.fillRect(p[0], p[1], SQ_W, SQ_W)
             ctx.strokeStyle = colours["black_inactive"]
             ctx.strokeRect(p[0], p[1], SQ_W, SQ_W)
