@@ -158,7 +158,8 @@ export class Game {
     gen_from_generic_fen(fen_str: string, x0: number, y0: number): void {
         let x: number = x0;
         let y: number = y0;
-        for (let piece_str of fen_str) {
+        for (let i=0; i<fen_str.length; i++) {
+            const piece_str: string = fen_str[i]
             let lower_case_str: string = piece_str.toLowerCase();
             let color: Color = "white";
             if (lower_case_str == piece_str){
@@ -173,8 +174,13 @@ export class Game {
                 this.add_piece(lower_case_str, color, x, y)
                 x += 1
             }
-            else {
-                x += parseInt(piece_str);
+            else { //NEED SOME WAY TO COUNT 16 RATHER THAN 1 THEN 6!
+                let start_int: number = 0
+                if (i < fen_str.length-2) {
+                    const next_str: string = fen_str[i+1]
+                    start_int = ("0123456789".includes(next_str)) ? 10 : parseInt(piece_str)
+                }
+                x += start_int;
             }
         }
     }

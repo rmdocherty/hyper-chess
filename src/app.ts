@@ -52,6 +52,7 @@ function join(id: string): void{
             app.game.make_move_by_label(old_label, new_label)
             app.vboard.draw_board()
             app.vboard.draw_pieces(app.game.LabelPiece)
+            check_win(app.game)
         }
     });
     conn.on('open', function() {
@@ -230,6 +231,7 @@ class App {
                     game.make_move_by_label(old_label, new_label)
                     vboard.draw_board()
                     vboard.draw_pieces(game.LabelPiece)
+                    check_win(game)
                 });
                 console.log('Connected to ', conn.peer);
                 conn.on('open', function() {
@@ -245,6 +247,8 @@ class App {
             }
         })
     }
+
+    
     
     handle_click_game(x: Pixel, y: Pixel): void{
         const vboard: Visual_Board = this.vboard
@@ -275,9 +279,14 @@ class App {
                         const start_sq_label: string = vboard.current_vec[0].label
                         const start_piece: Piece = g.LabelPiece.get(start_sq_label) as Piece
                         if (start_piece.color == this.game.current_turn) {
-                            this.make_move_by_label(start_sq_label, end_sq_label)
                             if (app_type == "guest" || app_type == "host") {
-                                conn.send(start_sq_label+end_sq_label)    
+                                if (g.player == start_piece.color) {
+                                    this.make_move_by_label(start_sq_label, end_sq_label)
+                                    conn.send(start_sq_label+end_sq_label)   
+                                }
+                            }
+                            else {
+                                this.make_move_by_label(start_sq_label, end_sq_label)
                             }
                         }
                         else {
@@ -323,14 +332,7 @@ class App {
         if (on_board == false) {
             vboard.reset_current_vec()
         }
-        if (g.winner != false) { //put this into an app based make_move function s.t it happens on host and guest.
-            const win_text: HTMLElement = document.getElementById("winText")
-            const winner: string = (g.winner == "black") ? "Black" : "White"
-            win_text.innerHTML = winner
-            const win_modal: HTMLElement = document.getElementById("winModal")
-            win_modal.style.display = "block"
-            localStorage.removeItem("current_game")
-        }
+        check_win(g)
         if ((x < 2*SQ_W) && (y < 2*SQ_W)) {
             openNav()
         }
@@ -368,7 +370,7 @@ class App {
         let current_board_loop_str: string = this.game.board.board_str
         console.log("adding", loop_str)
         if (current_board_loop_str == "") {
-            current_board_loop_str += (loop_str + "%")
+            current_board_loop_str += (loop_str)
         }
         else {
             console.log("adding to existing")
@@ -429,12 +431,18 @@ class App {
             this.vboard[sy][sx].fill("black_inactive")
         }
         else {
-            const p0: Point = this.place_stack[0]
-            this.vboard[p0.y][p0.x].fill("bg")
-            this.place_stack.push(new Point(sx, sy))
-            this.add_loop(mode)
-            this.place_stack = []
-            this.draw()
+            try { 
+                const p0: Point = this.place_stack[0]
+                this.vboard[p0.y][p0.x].fill("bg")
+                this.place_stack.push(new Point(sx, sy))
+                this.add_loop(mode)
+                this.place_stack = []
+                this.draw()
+            }
+            catch {
+                this.place_stack = []
+                this.draw()
+            }
         }
     }
 
@@ -503,8 +511,20 @@ class App {
     }
 }
 
+function check_win(g: Game) {
+    if (g.winner != false) { //put this into an app based make_move function s.t it happens on host and guest.
+        const win_text: HTMLElement = document.getElementById("winText")
+        const winner: string = (g.winner == "black") ? "Black" : "White"
+        win_text.innerHTML = winner
+        const win_modal: HTMLElement = document.getElementById("winModal")
+        win_modal.style.display = "block"
+        localStorage.removeItem("current_game")
+    }
+}
+
+
 function openNav() {
-    document.getElementById("mySidenav").style.width = "200px";
+    document.getElementById("mySidenav").style.width = "275px";
 }
 
 document.getElementById("closebtn").onclick = function() {
@@ -569,6 +589,7 @@ window.onload = function() {
 }
 
 canvas.addEventListener('mousedown', e => {
+    document.getElementById("mySidenav").style.width = "0px";
     const rect = canvas.getBoundingClientRect()
     const x: Pixel = e.clientX - rect.left
     const y: Pixel = e.clientY - rect.top

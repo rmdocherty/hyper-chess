@@ -17,10 +17,12 @@
     <h2>About:</h2>
     <p class="frontPageText">
         Hyperchess is a platform for creating and playing non-Euclidean chess games. 
-        In this context, non-Euclidean refers to loops connecting same sides of a board or lines connecting
-        opposite sides of the board. Users are encouraged to create their own boards via the 'BUILD' button and to play with friends 
-        over a peer-to-peer connection with the 'PLAY' button.
+        In this context, non-Euclidean refers to 'arches' connecting same sides of a board or 'lines' connecting
+        opposite sides of a board. Users can play with their friends by sharing a link - games can be played on one of
+        the preset boards (including cylindrical chess, toroidal chess <i>etc.</i>) or on user-created boards.
     </p>
+    <img src="assets/explainer.png" class="frontPageText">
+    <p class="frontPageText">Check out the 'Tutorial' board for interactive examples.</p>
     
     
     <h2>Rules:</h2>
@@ -30,21 +32,59 @@
         <li>Auto-promote to Queen only</li>
         <li>Everything else (castling, <i>en passant</i>) as in regular chess</li>
     </ul>
+
+    <h2>Building:</h2>
+    <p class="frontPageText">
+        'Square' places a normal square onto the board. 'Loop' lets you place either an 'Arch' or a 'Line' onto the board -
+        the first click is the start square and the second click completes the loop. Placing a 'Pair' acts in the same way: 
+        a pair of arch squares or line squares may be placed - but no longer need to be on same or opposite sides of board
+        (see the Mobius game board for an example of how this works).
+    </p>
+    <p>
+        Once finished, pressing 'Save' will save the board which can then be played on or edited later. Note pressing 'Save'
+        whilst a playing a game will save the current state of the board - this can be used to save the boards of people you
+        play against.
+    </p>
+    <h2>Errata (AKA bugs I won't fix):</h2>
+    <p class="frontPageText">
+        
+        <ul class="frontPageText">
+            <li>Pieces that move discretely (Pawn, Knight, King) cannot cross lines, but can move on arches assuming
+                the shape roughly follows their move pattern.
+            </li>
+            <li>
+                Bishops approaching an arch at different angles exit the arch in different directions: approaching at
+                an acute angle will cause a 'slingshot' which changes the y-direction of the move vector whereas an 
+                obtuse angle of approach will change the x-direction of the move vector. This is intended but feels
+                counter-intuitive to some, and also leads to bishops being able to change colours.
+            </li>
+            <li>
+                A consequence of this angluar dependence (and hyper-square programming) means that a bishop or queen sitting
+                on an arch can exit in <i>both</i> directions at <i>both</i> entrances. This is unintended but also quite fun - 
+                it leads to some more parity between Bishops and Rooks in terms of value but means Knights are now worth less.
+            </li>
+            <li>
+                The game can be zoomed in or rotated on mobile however zooming causes a slight performance slowdown/input lag which
+                I can't pinpoint the reason for.
+            </li>
+        </ul>
+    </p>
 </div>
 <div id="playModal" class="modal">
     <div class="modal-content">
-        <span class="close">&times;</span>
+        <span class="close" id="playClose">&times;</span>
         Variant:
         <select onchange="gameSelect()" id="game_select" class="dropdown">
-            <option value="hyper">HYPER</option>
+            <option value="hyper">Hyper</option>
+            <option value="tutorial">Tutorial</option>
             <option value="normal">Normal</option>
             <option value="cylindrical">Cylindrical</option>
             <option value="toroidal">Toroidal</option>
             <option value="los_alamos">Los Alamos</option>
-            <option value="mobius">Mobius</option>
-            <option value="test_pair">Test Pair</option>
-            <option value="test_line">Test Line</option>
+            <option value="mobius">Möbius</option>
+            <option value="moobius">Double Möbius</option>
         </select>
+        <!-- 
         &nbsp&nbsp Time (mins):
         <select class="dropdown">
             <option value="0">None</option>
@@ -61,6 +101,7 @@
             <option value="10">10</option>
             <option value="30">30</option>
         </select>
+        -->
 
         <p></p>
         Colour: 
@@ -82,21 +123,21 @@
 
 <div id="buildModal" class="modal">
     <div class="modal-content">
-        <span class="close">&times;</span>
+        <span class="close" id="buildClose">&times;</span>
         Default variants: 
         <select onchange="buildSelect()" id="build_select" class="dropdown">
-            <option value="hyper">HYPER</option>
+            <option value="hyper">Hyper</option>
+            <option value="tutorial">Tutorial</option>
             <option value="normal">Normal</option>
             <option value="cylindrical">Cylindrical</option>
             <option value="toroidal">Toroidal</option>
             <option value="los_alamos">Los Alamos</option>
-            <option value="mobius">Mobius</option>
-            <option value="test_pair">Test Pair</option>
-            <option value="test_line">Test Line</option>
+            <option value="mobius">Möbius</option>
+            <option value="moobius">Double Möbius</option>
         </select>
-        <!--
-
         
+
+        <!--
         <p></p>
         Width: <input type="number" id="width" style='font-size: 18px; width: 50px;'> &nbsp&nbsp Height: <input type="number" id="height" style='font-size: 18px;; width: 50px;'>
         <p></p>
@@ -105,7 +146,8 @@
         FEN: &nbsp&nbsp<input type="text" id="fen" style='font-size: 18px;'>
         <p></p>
         -->
-        <a href="game.html?build">Build!</a>
+        
+        &nbsp&nbsp <a href="game.html?build">Build!</a>
     </div>
 </div>
 
@@ -119,7 +161,6 @@ function gameSelect(){
 }
 function buildSelect(){
     const game = document.getElementById("build_select").value
-    //localStorage.removeItem("selected_game")
     localStorage.setItem("selected_game", game)
     localStorage.removeItem("current_game")
     console.log(game)
@@ -138,15 +179,13 @@ function add_games_to_select(){
                 option.innerHTML = keys
                 document.getElementById(selector).appendChild(option)
             }
-            
-            //console.log(boards)
         }
     }
 }
 
 let modal = document.getElementById("playModal");
 let play_button = document.getElementById("playButton")
-let span = document.getElementsByClassName("close")[0];
+let span = document.getElementById("playClose")
 
 play_button.onclick = function() {
     modal.style.display = "block";
@@ -156,9 +195,10 @@ span.onclick = function() {
     modal.style.display = "none";
 }
 
+
 let build_modal = document.getElementById("buildModal");
 let build_button = document.getElementById("buildButton")
-let build_span = document.getElementsByClassName("close")[0];
+let build_span = document.getElementById("buildClose")
 
 build_button.onclick = function() {
     build_modal.style.display = "block";

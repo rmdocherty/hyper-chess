@@ -89,4 +89,7 @@ export function map_points_to_align(points: Array<Point>, base_board_indices: Ar
     else if (p0.y == p1.y && p0.y > my) {
         return "t"
     }
+    else {
+        return "x"
+    }
 }

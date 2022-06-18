@@ -137,6 +137,7 @@ export class Board extends Array {
             align = loop_unit[0] as Align
         }
         else {
+            console.log(loop_unit)
             throw new Error("Incorrect alignment, must be one of x, y, t, b")
         }
         

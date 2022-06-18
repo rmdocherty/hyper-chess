@@ -16,15 +16,28 @@ const classic = {"bg": "#FFFFFF", "black": "#cab175", "white": "#e9daB5",
                 "black_inactive": "#b55353", "white_inactive": "#de6666"} 
 //"menu": "#a52a2a", "circle": "#3eb053", "hyper_light": "#fce8b1","hyper_dark": "#80765d""active": "#84a360"
 
-const mono = {"bg": "#FFFFFF", "black": "#363636", "white": "#e6e6e6", 
+const mono = {"bg": "#FFFFFF", "black": "#4a4949", "white": "#e6e6e6", 
                 "black_active": "#67b553", "white_active": "#93e37f", 
                 "black_inactive": "#b55353", "white_inactive": "#de6666"} 
 
 const vapor = {"bg": "#FFFFFF", "black": "#e89be5", "white": "#9bd4e8", 
                 "black_active": "#67b553", "white_active": "#93e37f", 
-                "black_inactive": "#b55353", "white_inactive": "#de6666"}                
+                "black_inactive": "#b55353", "white_inactive": "#de6666"}    
 
-export const color_themes = {"classic": classic, "mono": mono, "vapor": vapor}
+const forest = {"bg": "#FFFFFF", "black": "#34623F", "white": "#768948", 
+                "black_active": "#DA881E", "white_active": "#D1B24A", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666"}   
+
+const water = {"bg": "#FFFFFF", "black": "#1B98E0", "white": "#E8F1F2", 
+                "black_active": "#67b553", "white_active": "#93e37f", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666"}
+
+const fire = {"bg": "#FFFFFF", "black": "#81171B", "white": "#EF8354", 
+                "black_active": "#67b553", "white_active": "#93e37f", 
+                "black_inactive": "#b55353", "white_inactive": "#de6666"}
+
+
+export const color_themes = {"classic": classic, "mono": mono, "vapor": vapor, "forest": forest, "water": water, "fire": fire}
 
 
 export let colours = classic;
@@ -55,8 +68,8 @@ class Visual_Square {
     midpoint: Array<number>;
     type: string;
     bbox: Array<Array<number>>;
-    label: string;
-    constructor(real_square, points, midpoint, type, label="") {
+    label: Array<string>;
+    constructor(real_square, points, midpoint, type, label=[""]) {
         this.real_sq = real_square;
         this.points = points;
         this.midpoint = midpoint;
@@ -142,10 +155,10 @@ class Visual_Square {
         let real_x: Pixel = this.midpoint[0];
         let real_y: Pixel = this.midpoint[1];
         ctx.fillStyle = (this.real_sq.color == "white") ? colours["black"] : colours["white"];
-        const large_font_size: Pixel = 3 * (SQ_W / 5)
+        const large_font_size: Pixel = 2.45 * (SQ_W / 5)
         ctx.font = String(large_font_size) + 'px arial';
         ctx.fillText(this.label[0], real_x - large_font_size/4, real_y + large_font_size/4);
-        const small_font_size: Pixel = 1.5 * (SQ_W / 5)
+        const small_font_size: Pixel = 1.35 * (SQ_W / 5)
         ctx.font = String(small_font_size) + 'px arial';
         ctx.fillText(this.label[1], real_x + large_font_size/3, real_y + large_font_size/2, SQ_W);
     }
@@ -237,7 +250,7 @@ export class Visual_Board extends Board {
         return sq
     }
 
-    add_square(x: number, y: number, bbox: Array<Pixel>=[], points: Array<Array<Pixel>>=[], label: string=""): void {
+    add_square(x: number, y: number, bbox: Array<Pixel>=[], points: Array<Array<Pixel>>=[], label: Array<string>=[""]): void {
         let midpoint: Array<Pixel>
         let blx: Pixel, bly: Pixel, urx: Pixel, ury: Pixel
         const board: Board = this.game.board
@@ -255,7 +268,7 @@ export class Visual_Board extends Board {
             points = [[blx, bly], [blx + SQ_W, bly], [blx + SQ_W, bly + SQ_W], [blx, bly + SQ_W]]
         }
         midpoint = [blx + SQ_W / 2, bly + SQ_W / 2]
-        if (label == "") {
+        if (label[0] == "") {
             this[y][x] = new Visual_Square(board[y][x], points, midpoint, "square")
         }
         else {
@@ -295,7 +308,7 @@ export class Visual_Board extends Board {
             num = line_pair_count
             line_pair_count += 1
         }
-        const label: string = label_str + String(num)
+        const label: Array<string> = [label_str, String(num)]
         const points: Array<Point> = loop_desc[3]
         const [startp, endp]: Array<Point> = [points[0], points[1]]
         this.add_square(startp.x, startp.y, [], [], label)
