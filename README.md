@@ -21,7 +21,18 @@ Once finished, pressing 'Save' will save the board which can then be played on o
 - Bishops approaching an arch at different angles exit the arch in different directions: approaching at an acute angle will cause a 'slingshot' which changes the y-direction of the move vector whereas an obtuse angle of approach will change the x-direction of the move vector. This is intended but feels counter-intuitive to some, and also leads to bishops being able to change colours.
 - A consequence of this angluar dependence (and hyper-square programming) means that a bishop or queen sitting on an arch can exit in *both* directions at *both* entrances. This is unintended but also quite fun - it leads to some more parity between Bishops and Rooks in terms of value but means Knights are now worth less.
 - The game can be zoomed in or rotated on mobile however zooming causes a slight performance slowdown/input lag which I can't pinpoint the reason for.
+
+## Technical Decisions:
+- Typescript: easier than using pure JS (not sure I used it nearly as well as I could have done though).
+- No frameworks, as I feel they overcomplicate some projects.
+- Simple: limited to local play and peer-to-peer play only. No need for centralised server or in-app communication as we have assumed communication already. Any rendering can easily be done on the client side. 
+- 'Hyper'/non-Euclidean behaviour handled by 'hypersquares' which act like nodes in a linked list, repeating the raycasting of the move vector at the new square (and inverting/not inverting as required). This was designed to be super simple to implement, and initially it was, but as usual the system ended up slightly overextended and messy.
+- Tried being modular such that pieces were independent of board squares and vice versa but this lead to a strange situation where checking if a square was occupied/what square a piece was on required a bidirectional hashmap.
+- Only modified parts of the canvas were redrawn (usuallly). Probably an unneeded optimisation.
+- Different gameboards kept in localStorage - fairly unstable but users can download any boards they really want to keep.
+
 ## Libraries
 Thanks to the PeerJS team (<https://peerjs.com/>) for their library.
+
 ## Licensing
 Licensed under the AGPL v3.
